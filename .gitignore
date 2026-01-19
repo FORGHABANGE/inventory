@@ -1,6 +1,19 @@
+# Dependencies
 vendor/
+
+# User uploads
 uploads/
+
+# Database credentials
 includes/db.php
-*.log
+
+# OS generated files
 .DS_Store
 Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log

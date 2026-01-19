@@ -1,12 +1,12 @@
 <?php
 // includes/db.example.php
 // Database connection for Inventory Project
-// Copy this file to db.php and fill in your actual database credentials
+// Copy this file to db.php and fill in your actual credentials
 
 $host = 'localhost';        // Database host (usually localhost)
-$db   = 'your_database_name';     // database name
-$user = 'your_db_username';             // DB username
-$pass = 'your_db_password';                 // DB password
+$db   = 'inventory';     // database name
+$user = 'root';             // DB username
+$pass = '';                 // DB password
 $charset = 'utf8mb4';       // Charset for proper encoding
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
