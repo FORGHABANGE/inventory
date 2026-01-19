@@ -1,0 +1,181 @@
+<?php
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors',1);
+
+/* ===============================
+   AUTH & ROLE CHECK
+================================ */
+if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
+    header("Location: ../login.php");
+    exit;
+}
+
+require_once '../includes/db.php';
+
+$staff_id = $_SESSION['user_id'];
+
+if (!isset($_GET['sale_id']) || !is_numeric($_GET['sale_id'])) {
+    die("Invalid sale.");
+}
+
+$sale_id = (int)$_GET['sale_id'];
+
+/* ===============================
+   FETCH SALE INFO
+================================ */
+$stmt = $pdo->prepare("SELECT * FROM sales WHERE id=? AND user_id=?");
+$stmt->execute([$sale_id, $staff_id]);
+$sale = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$sale) die("Sale not found.");
+
+/* ===============================
+   FETCH PRODUCTS
+================================ */
+$products = $pdo->query("SELECT id, name, selling_price, quantity FROM products WHERE is_active=1")->fetchAll(PDO::FETCH_ASSOC);
+
+/* ===============================
+   HANDLE ADD ITEM FORM
+================================ */
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['product_id'])) {
+    $product_id = (int)$_POST['product_id'];
+    $qty = $_POST['quantity'];
+    $unit_price = $_POST['unit_price'];
+
+    // Calculate line total
+    $line_total = $qty * $unit_price;
+
+    // Insert sale item
+    $stmt = $pdo->prepare("INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, line_total) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$sale_id, $product_id, $qty, $unit_price, $line_total]);
+
+    // Recalculate total_amount for sale
+    $stmt = $pdo->prepare("SELECT SUM(line_total) FROM sale_items WHERE sale_id=?");
+    $stmt->execute([$sale_id]);
+    $total_amount = $stmt->fetchColumn();
+
+    $stmt = $pdo->prepare("UPDATE sales SET total_amount=? WHERE id=?");
+    $stmt->execute([$total_amount, $sale_id]);
+
+    header("Location: add_sale_items.php?sale_id=$sale_id"); // refresh page
+    exit;
+}
+
+/* ===============================
+   FETCH CURRENT SALE ITEMS
+================================ */
+$sale_items = $pdo->prepare("
+    SELECT si.*, p.name
+    FROM sale_items si
+    JOIN products p ON si.product_id = p.id
+    WHERE si.sale_id=?
+");
+$sale_items->execute([$sale_id]);
+$sale_items = $sale_items->fetchAll(PDO::FETCH_ASSOC);
+
+$totalAmount = 0;
+foreach($sale_items as $i) $totalAmount += $i['line_total'];
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Add Sale Items</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<style>
+body{margin:0;font-family:Poppins,sans-serif;background:#121212;color:#fff;}
+.page-container{margin-left:210px;margin-top:90px;padding:30px;}
+.card{background:#1a1a1a;padding:20px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.6);margin-bottom:20px;}
+input,button,select{padding:10px 12px;border-radius:8px;border:none;font-size:15px;}
+input,select{width:100%;margin-bottom:12px;background:#121212;color:#fff;border:1px solid #333;}
+button{background:#00ff9d;color:#000;font-weight:600;cursor:pointer;}
+.table{width:100%;border-collapse:collapse;margin-top:12px;}
+.table th,.table td{padding:12px;border-bottom:1px solid #222;text-align:center;}
+.table th{color:#bdbdbd;}
+.action-links{display:flex;justify-content:center;gap:8px;}
+.btn.danger{background:#ff4d4d;color:#fff;}
+.summary{margin-top:12px;display:flex;justify-content:flex-end;gap:12px;font-size:16px;}
+</style>
+</head>
+<body>
+
+<?php include 'layout/sidebar_staff.php'; ?>
+<?php include '../layout/header.php'; ?>
+
+<div class="page-container">
+
+<h2><i class="bi bi-box-seam"></i> Sale Items for Invoice <?= htmlspecialchars($sale['invoice_no']) ?></h2>
+<p>Customer: <?= htmlspecialchars($sale['customer_name']) ?></p>
+
+<!-- Add Product Form -->
+<div class="card">
+<form method="POST">
+    <label>Select Product</label>
+    <select name="product_id" required>
+        <option value="">--Choose product--</option>
+        <?php foreach($products as $p): ?>
+        <option value="<?= $p['id'] ?>" data-price="<?= $p['selling_price'] ?>">
+            <?= htmlspecialchars($p['name']) ?> (<?= $p['quantity'] ?>)
+        </option>
+        <?php endforeach; ?>
+    </select>
+
+    <label>Quantity</label>
+    <input type="number" name="quantity" min="1" value="1" required>
+
+    <label>Unit Price</label>
+    <input type="number" name="unit_price" min="0" step="0.01" required>
+
+    <button type="submit"><i class="bi bi-plus-circle"></i> Add Item</button>
+</form>
+</div>
+
+<!-- Sale Items Table -->
+<div class="card">
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Line Total</th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php if(empty($sale_items)): ?>
+        <tr><td colspan="4">No items added yet.</td></tr>
+    <?php else: ?>
+        <?php foreach($sale_items as $i): ?>
+        <tr>
+            <td><?= htmlspecialchars($i['name']) ?></td>
+            <td><?= $i['quantity'] ?></td>
+            <td><?= number_format($i['unit_price'],2) ?></td>
+            <td><?= number_format($i['line_total'],2) ?></td>
+        </tr>
+        <?php endforeach; ?>
+    <?php endif; ?>
+    </tbody>
+</table>
+
+<div class="summary">
+    <strong>Total Amount: <?= number_format($totalAmount,2) ?></strong>
+</div>
+</div>
+
+<!-- Paid Amount -->
+<div class="card">
+<form method="POST" action="complete_sale.php?sale_id=<?= $sale_id ?>">
+    <label>Paid Amount</label>
+    <input type="number" name="paid_amount" min="0" step="0.01" value="<?= $sale['paid_amount'] ?? 0 ?>" required>
+    <button type="submit"><i class="bi bi-check-circle"></i> Complete Sale</button>
+</form>
+</div>
+
+</div>
+
+<?php include '../layout/footer.php'; ?>
+</body>
+</html>

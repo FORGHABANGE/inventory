@@ -1,0 +1,345 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: auth/login.php");
+    exit;
+}
+
+include "includes/db.php";
+
+$errors = [];
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $product_id = !empty($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+    $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 0;
+    $adjust_type = $_POST['adjust_type'] ?? 'IN'; // IN or OUT
+    $reference = trim($_POST['reference'] ?? '');
+    $note = trim($_POST['note'] ?? '');
+
+    // Validation
+    if ($product_id <= 0) $errors[] = "Please select a product.";
+    if ($quantity <= 0) $errors[] = "Quantity must be greater than zero.";
+    if (!in_array($adjust_type, ['IN','OUT'])) $errors[] = "Invalid adjustment type.";
+
+    if (empty($errors)) {
+        // Fetch current quantity
+        $stmt = $pdo->prepare("SELECT quantity FROM products WHERE id = :id");
+        $stmt->execute([':id' => $product_id]);
+        $product = $stmt->fetch();
+
+        if (!$product) {
+            $errors[] = "Selected product not found.";
+        } elseif ($adjust_type === 'OUT' && $product['quantity'] < $quantity) {
+            $errors[] = "Insufficient stock to decrease. Current: {$product['quantity']}";
+        }
+    }
+
+    // Insert stock adjustment
+    if (empty($errors)) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO stock_movements
+                (product_id, type, quantity, reference, note, user_id, created_at)
+                VALUES (:product_id, 'adjustment', :quantity, :reference, :note, :user_id, NOW())");
+
+            $stmt->execute([
+                ':product_id' => $product_id,
+                ':quantity' => $quantity,
+                ':reference' => $reference,
+                ':note' => $note,
+                ':user_id' => $_SESSION['user_id']
+            ]);
+
+            // Update product quantity
+            if ($adjust_type === 'IN') {
+                $update = $pdo->prepare("UPDATE products SET quantity = quantity + :qty WHERE id = :id");
+            } else {
+                $update = $pdo->prepare("UPDATE products SET quantity = quantity - :qty WHERE id = :id");
+            }
+            $update->execute([':qty' => $quantity, ':id' => $product_id]);
+
+            $success = "Stock adjustment completed successfully.";
+
+        } catch (Exception $e) {
+            $errors[] = "Database error: " . $e->getMessage();
+        }
+    }
+}
+
+// Fetch products for dropdown
+$products = $pdo->query("SELECT id, name FROM products ORDER BY name ASC")->fetchAll();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Adjust - Inventory System</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+/* =========================
+   Base & Body Styles
+========================= */
+body {
+    background: #121212;
+    font-family: "Poppins", sans-serif;
+    color: #fff;
+    margin: 0;
+}
+
+/* =========================
+   Page Layout
+========================= */
+.page-container {
+    margin-left: 240px; /* accommodate sidebar */
+    padding: 25px;
+    margin-top: 90px; /* below header */
+}
+
+/* =========================
+   Header
+========================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.page-header h2 {
+    color: #00ff9d;
+    margin: 0;
+}
+
+/* =========================
+   Messages (Success/Error)
+========================= */
+.messages {
+    margin-bottom: 20px;
+}
+
+.messages .error {
+    background: #ff4d4d33;
+    border-left: 4px solid #ff4d4d;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    color: #fff;
+}
+
+.messages .success {
+    background: #00ff9d33;
+    border-left: 4px solid #00ff9d;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    color: #000;
+}
+
+/* =========================
+   Form Container
+========================= */
+.card {
+    background: #1a1a1a;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* =========================
+   Form Elements
+========================= */
+form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #00ff9d;
+}
+
+form input[type="number"],
+form input[type="text"],
+form select,
+form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 15px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #121212;
+    color: #fff;
+    font-size: 14px;
+}
+
+form textarea {
+    resize: vertical;
+}
+
+/* =========================
+   Buttons
+========================= */
+.btn {
+    background: #00ff9d;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background: #00e68c;
+}
+
+.btn.secondary {
+    background: #333;
+    color: #fff;
+}
+
+.btn.secondary:hover {
+    background: #444;
+}
+
+/* Buttons group in header */
+.actions-group button {
+    background: #00ff9d;
+    color: #000;
+    border: none;
+    padding: 10px 18px;
+    margin-left: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.actions-group button:hover {
+    background: #00e68c;
+}
+
+/* =========================
+   Table Styles
+========================= */
+.movement-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 25px;
+}
+
+.movement-table thead {
+    background: #00ff9d;
+    color: #000;
+}
+
+.movement-table th,
+.movement-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+}
+
+.type-in {
+    color: #00ff9d;
+    font-weight: 600;
+}
+
+.type-out {
+    color: #ff4d4d;
+    font-weight: 600;
+}
+
+.type-adjust {
+    color: #ffd700;
+    font-weight: 600;
+}
+
+/* =========================
+   Responsive Design
+========================= */
+@media (max-width: 720px) {
+    .page-container {
+        margin-left: 0;
+        padding: 15px;
+        margin-top: 70px;
+    }
+
+    .actions-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .actions-group button {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .movement-table th,
+    .movement-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
+</style>
+</head>
+<body>
+
+<?php include "layout/sidebar.php"; ?>
+<?php include "layout/header.php"; ?>
+
+<div class="page-container">
+    <div class="card">
+        <h2><i class="bi bi-sliders"></i> Stock Adjust</h2>
+
+        <div class="messages">
+            <?php if (!empty($errors)): ?>
+                <?php foreach($errors as $err): ?>
+                    <div class="error"><?= htmlspecialchars($err) ?></div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            <?php if ($success): ?>
+                <div class="success"><?= htmlspecialchars($success) ?></div>
+            <?php endif; ?>
+        </div>
+
+        <form method="POST">
+            <label>Product</label>
+            <select name="product_id" required>
+                <option value="">Select product</option>
+                <?php foreach($products as $p): 
+                    $sel = (isset($_POST['product_id']) && $_POST['product_id'] == $p['id']) ? 'selected' : '';
+                ?>
+                    <option value="<?= $p['id'] ?>" <?= $sel ?>><?= htmlspecialchars($p['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+
+            <label>Adjustment Type</label>
+            <select name="adjust_type" required>
+                <option value="IN" <?= (isset($_POST['adjust_type']) && $_POST['adjust_type'] == 'IN') ? 'selected' : '' ?>>Increase</option>
+                <option value="OUT" <?= (isset($_POST['adjust_type']) && $_POST['adjust_type'] == 'OUT') ? 'selected' : '' ?>>Decrease</option>
+            </select>
+
+            <label>Quantity</label>
+            <input type="number" name="quantity" min="1" required value="<?= $_POST['quantity'] ?? '' ?>">
+
+            <label>Reference</label>
+            <input type="text" name="reference" value="<?= $_POST['reference'] ?? '' ?>">
+
+            <label>Note</label>
+            <textarea name="note" rows="3"><?= $_POST['note'] ?? '' ?></textarea>
+
+            <div style="display:flex; gap:12px;">
+                <button type="submit" class="btn"><i class="bi bi-save"></i> Adjust Stock</button>
+                <a href="stock_movements.php" class="btn secondary"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

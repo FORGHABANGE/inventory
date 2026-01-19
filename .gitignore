@@ -1,0 +1,6 @@
+vendor/
+uploads/
+includes/db.php
+*.log
+.DS_Store
+Thumbs.db
