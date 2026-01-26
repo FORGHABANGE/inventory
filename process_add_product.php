@@ -1,4 +1,6 @@
 <?php
+include 'auth_admin.php';
+
 // Load PDO database connection
 require_once 'includes/db.php';
 
@@ -22,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($_FILES['product_image']['name'])) {
 
-        $upload_dir = "uploads/";
+        $upload_dir = "uploads/products/";
 
         // Ensure uploads folder exists
         if (!is_dir($upload_dir)) {
@@ -70,9 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $query = "INSERT INTO products 
-                (sku, name, category_id, quantity, buy_price, sell_price, reorder_level, description, image, status)
+                (sku, name, category_id, quantity, buy_price, sell_price, reorder_level, description, image_path, status)
                   VALUES 
-                (:sku, :name, :cat, :qty, :buy, :sell, :reorder, :descr, :image, :status)";
+                (:sku, :name, :cat, :qty, :buy, :sell, :reorder, :descr, :image_path, :status)";
 
         $stmt = $pdo->prepare($query);
 
@@ -85,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':sell'    => $sell_price,
             ':reorder' => $reorder_level,
             ':descr'   => $description,
-            ':image'   => $image_name,
+            ':image_path'   => $image_name ? 'uploads/products/' . $image_name : null,
             ':status'  => 'active'
         ]);
 

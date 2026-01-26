@@ -1,6 +1,7 @@
 <?php
+include 'auth_admin.php';
+
 require_once 'includes/db.php';
-session_start();
 
 // Load categories
 try {
@@ -50,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Image handling
     $imageFilename = null;
-    $uploadDir = __DIR__ . '/uploads';
+    $uploadDir = __DIR__ . '/uploads/products';
     if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
 
     if (!empty($_FILES['image_file']['name'])) {
@@ -140,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':reorder_level' => $reorder_level,
                 ':quantity' => $quantity,
                 ':description' => $description,
-                ':image_path' => $imageFilename
+                ':image_path' => $imageFilename ? 'uploads/products/' . $imageFilename : null
             ]);
 
             $success = "Product added successfully with SKU: $sku";
@@ -286,5 +287,6 @@ urlInput.value='';
 preview.innerHTML='';
 <?php endif; ?>
 </script>
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

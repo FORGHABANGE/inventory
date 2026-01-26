@@ -1,6 +1,7 @@
 <?php
+include 'auth_admin.php';
+
 require_once 'includes/db.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 /*
  We compute total_amount from sale_items to support

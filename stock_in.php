@@ -5,54 +5,79 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-include "includes/db.php";
+require_once "includes/db.php";
 
 $errors = [];
 $success = '';
 
-// Handle form submission
+/* ===============================
+   HANDLE FORM SUBMISSION
+================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $product_id = !empty($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
-    $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 0;
-    $reference = trim($_POST['reference'] ?? '');
-    $note = trim($_POST['note'] ?? '');
 
-    // Validation
+    $product_id = (int)($_POST['product_id'] ?? 0);
+    $quantity   = (int)($_POST['quantity'] ?? 0);
+    $reference  = trim($_POST['reference'] ?? '');
+    $note       = trim($_POST['note'] ?? '');
+    $user_id    = $_SESSION['user_id'];
+
     if ($product_id <= 0) $errors[] = "Please select a product.";
-    if ($quantity <= 0) $errors[] = "Quantity must be greater than zero.";
+    if ($quantity <= 0)   $errors[] = "Quantity must be greater than zero.";
 
-    // Insert stock movement
     if (empty($errors)) {
-        try {
-            $sql = "INSERT INTO stock_movements 
-                (product_id, type, quantity, reference, note, user_id, created_at)
-                VALUES
-                (:product_id, :type, :quantity, :reference, :note, :user_id, NOW())";
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':product_id' => $product_id,
-                ':type' => 'in',
-                ':quantity' => $quantity,
-                ':reference' => $reference,
-                ':note' => $note,
-                ':user_id' => $_SESSION['user_id']
+        try {
+            $pdo->beginTransaction();
+
+            /* Lock product row */
+            $lock = $pdo->prepare("SELECT quantity FROM products WHERE id = ? FOR UPDATE");
+            $lock->execute([$product_id]);
+
+            if (!$lock->fetch()) {
+                throw new Exception("Selected product does not exist.");
+            }
+
+            /* Insert stock movement */
+            $insertMovement = $pdo->prepare("
+                INSERT INTO stock_movements
+                (product_id, type, quantity, reference, note, user_id)
+                VALUES (?,?,?,?,?,?)
+            ");
+            $insertMovement->execute([
+                $product_id,
+                'IN',
+                $quantity,
+                $reference ?: 'ADMIN-STOCK-IN',
+                $note,
+                $user_id
             ]);
 
-            // Update product quantity
-            $update = $pdo->prepare("UPDATE products SET quantity = quantity + :qty WHERE id = :id");
-            $update->execute([':qty' => $quantity, ':id' => $product_id]);
+            /* Update product quantity */
+            $updateProduct = $pdo->prepare("
+                UPDATE products
+                SET quantity = quantity + ?
+                WHERE id = ?
+            ");
+            $updateProduct->execute([$quantity, $product_id]);
 
+            $pdo->commit();
             $success = "Stock added successfully.";
 
         } catch (Exception $e) {
-            $errors[] = "Database error: " . $e->getMessage();
+            $pdo->rollBack();
+            $errors[] = $e->getMessage();
         }
     }
 }
 
-// Fetch products for dropdown
-$products = $pdo->query("SELECT id, name FROM products ORDER BY name ASC")->fetchAll();
+/* ===============================
+   FETCH PRODUCTS
+================================ */
+$products = $pdo->query("
+    SELECT id, name
+    FROM products
+    ORDER BY name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -320,5 +345,6 @@ form textarea {
     </div>
 </div>
 
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

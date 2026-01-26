@@ -96,5 +96,6 @@ input{width:100%;padding:10px;border-radius:8px;border:1px solid #222;background
 </form>
 </div>
 </div>
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

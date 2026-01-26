@@ -1,9 +1,5 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: auth/login.php");
-    exit;
-}
+include 'auth_admin.php';
 
 include "includes/db.php"; // DB connection
 
@@ -136,7 +132,7 @@ $categories = $catStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => name
 
         <tbody>
         <?php
-        $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
+        $stmt = $pdo->query("SELECT * FROM products ORDER BY id ASC");
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if ($products) {
@@ -144,7 +140,7 @@ $categories = $catStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => name
 
                 // FIX: Image path uses correct DB column
                 $img = (!empty($row['image_path'])) 
-                        ? $row['image_path']
+                        ? (filter_var($row['image_path'], FILTER_VALIDATE_URL) ? $row['image_path'] : $row['image_path'])
                         : "assets/images/default.png";
 
                 // Category lookup
@@ -193,5 +189,6 @@ $categories = $catStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => name
 
 </div>
 
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

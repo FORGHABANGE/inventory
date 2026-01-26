@@ -36,7 +36,7 @@ CREATE TABLE products (
   id INT AUTO_INCREMENT PRIMARY KEY,
   sku VARCHAR(100) UNIQUE,
   name VARCHAR(255) NOT NULL,
-  quantity varchar(100) default '0',
+  quantity INT DEFAULT 0,
   category_id INT,
   purchase_price DECIMAL(12,2) DEFAULT 0,
   selling_price DECIMAL(12,2) DEFAULT 0,
@@ -124,16 +124,16 @@ INSERT INTO categories (name, description) VALUES
 INSERT INTO products 
 (sku, name, quantity, category_id, purchase_price, selling_price, reorder_level, image_path, description, is_active)
 VALUES
-('PRD-001', 'Coca-Cola 1.5L', '15 bottles', 1, 600, 800, 20, NULL, 'Popular soft drink', 1),
-('PRD-002', 'Supermont Water 1.5L' , '10 bottles', 1, 300, 500, 30, NULL, 'Cameroonian mineral water', 1),
-('PRD-003', 'Golden Spaghetti 500g', '20 packets', 2, 550, 700, 25, NULL, 'Pasta product', 1),
-('PRD-004', 'Mayor Oil 1L', '8 bottles', 2, 1200, 1500, 15, NULL, 'Cooking oil', 1),
-('PRD-005', 'Nido 400g', '10 sachets', 2, 2900, '', 3300, 10, NULL, 'Milk powder', 1),
+('PRD-001', 'Coca-Cola 1.5L', 15, 1, 600, 800, 20, NULL, 'Popular soft drink', 1),
+('PRD-002', 'Supermont Water 1.5L' , 10, 1, 300, 500, 30, NULL, 'Cameroonian mineral water', 1),
+('PRD-003', 'Golden Spaghetti 500g', 20, 2, 550, 700, 25, NULL, 'Pasta product', 1),
+('PRD-004', 'Mayor Oil 1L', 8, 2, 1200, 1500, 15, NULL, 'Cooking oil', 1),
+('PRD-005', 'Nido 400g', 10, 2, 2900, 3300, 10, NULL, 'Milk powder', 1),
 ('PRD-006', 'Dudu Osun Soap', 12, 3, 900, 1200, 20, NULL, 'Black natural soap', 1),
 ('PRD-007', 'Carrot Lotion', 10, 3, 1500, 2000, 10, NULL, 'Skin lotion', 1),
 ('PRD-008', 'Harpic Toilet Cleaner', 10, 4, 800, 1200, 10, NULL, 'Cleaning liquid', 1),
-('PRD-009', 'Omo Detergent 1kg', '12 sachets', 4, 1800, 2300, 15, NULL, 'Laundry detergent', 1),
+('PRD-009', 'Omo Detergent 1kg', 12, 4, 1800, 2300, 15, NULL, 'Laundry detergent', 1),
 ('PRD-010', 'USB Flash Drive 32GB', 15, 5, 3500, 4500, 5, NULL, 'Storage device', 1),
 ('PRD-011', 'Chocolate Bonbon', 20, 6, 100, 150, 50, NULL, 'Candy sweet', 1),
-('PRD-012', 'Bisco Biscuit 50g', '65 sachets', 6, 100, 150, 40, NULL, 'Small biscuit', 1);
+('PRD-012', 'Bisco Biscuit 50g', 65, 6, 100, 150, 40, NULL, 'Small biscuit', 1);
 

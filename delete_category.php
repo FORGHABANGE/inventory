@@ -1,6 +1,7 @@
 <?php
+include 'auth_admin.php';
+
 require_once 'includes/db.php';
-session_start();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $admin_id = 1;
 

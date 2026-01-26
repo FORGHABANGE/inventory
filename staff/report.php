@@ -1,91 +1,81 @@
 <?php
-include 'auth_admin.php';
+// staff_report.php
+include 'auth_staff.php';
 
-// report.php
-require_once 'includes/db.php';
+require_once '../includes/db.php';
 
-require __DIR__ . '/vendor/autoload.php';
+require_once '../vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-/* ------------------ DATABASE QUERIES ------------------ */
+$staff_id = $_SESSION['user_id'];
 
-// Products
-$productStmt = $pdo->query("
-    SELECT p.sku, p.name, p.quantity, c.name AS category,
-           p.purchase_price, p.selling_price, p.reorder_level
-    FROM products p
-    LEFT JOIN categories c ON p.category_id = c.id
-    ORDER BY p.name ASC
-");
-$products = $productStmt->fetchAll(PDO::FETCH_ASSOC);
+/* ================= DATABASE QUERIES ================= */
 
-// Daily sales
-$salesStmt = $pdo->query("
+// Staff daily sales
+$salesStmt = $pdo->prepare("
     SELECT DATE(s.created_at) AS sale_date,
            SUM(s.total_amount) AS total_amount,
            SUM(s.paid_amount) AS paid_amount,
            SUM(s.total_amount - s.paid_amount) AS balance
     FROM sales s
+    WHERE s.user_id = ?
     GROUP BY DATE(s.created_at)
     ORDER BY sale_date DESC
 ");
+$salesStmt->execute([$staff_id]);
 $sales = $salesStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Invoices
-$invoiceStmt = $pdo->query("
+// Staff invoices
+$invoiceStmt = $pdo->prepare("
     SELECT invoice_no, customer_name, total_amount, paid_amount,
            (total_amount - paid_amount) AS balance, created_at
     FROM sales
+    WHERE user_id = ?
     ORDER BY created_at DESC
 ");
+$invoiceStmt->execute([$staff_id]);
 $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ------------------ EXPORT TO EXCEL ------------------ */
+/* ================= EXPORT TO EXCEL ================= */
 if (isset($_GET['export'])) {
     $type = $_GET['export'];
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
-    if ($type === 'products') {
-        $sheet->setTitle('Products');
-        $sheet->fromArray(['SKU','Product','Category','Quantity','Purchase Price','Selling Price','Reorder Level'], null, 'A1');
-        $row = 2;
-        foreach ($products as $p) {
-            $sheet->fromArray([
-                $p['sku'], $p['name'], $p['category'], $p['quantity'],
-                $p['purchase_price'], $p['selling_price'], $p['reorder_level']
-            ], null, "A{$row}");
-            $row++;
-        }
-        $filename = 'products.xlsx';
-    } elseif ($type === 'sales') {
-        $sheet->setTitle('Daily Sales');
+    if ($type === 'sales') {
+        $sheet->setTitle('My Daily Sales');
         $sheet->fromArray(['Date','Total Amount','Paid','Balance'], null, 'A1');
         $row = 2;
         foreach ($sales as $s) {
             $sheet->fromArray([$s['sale_date'], $s['total_amount'], $s['paid_amount'], $s['balance']], null, "A{$row}");
             $row++;
         }
-        $filename = 'daily_sales.xlsx';
+        $filename = 'my_daily_sales.xlsx';
+
     } elseif ($type === 'invoices') {
-        $sheet->setTitle('Invoices');
+        $sheet->setTitle('My Invoices');
         $sheet->fromArray(['Invoice No','Customer','Total','Paid','Balance','Date'], null, 'A1');
         $row = 2;
         foreach ($invoices as $inv) {
             $sheet->fromArray([
-                $inv['invoice_no'], $inv['customer_name'], $inv['total_amount'],
-                $inv['paid_amount'], $inv['balance'], $inv['created_at']
+                $inv['invoice_no'], 
+                $inv['customer_name'], 
+                $inv['total_amount'],
+                $inv['paid_amount'], 
+                $inv['balance'], 
+                $inv['created_at']
             ], null, "A{$row}");
             $row++;
         }
-        $filename = 'invoices.xlsx';
+        $filename = 'my_invoices.xlsx';
+
     } else {
         http_response_code(400);
         exit('Invalid export type');
     }
 
-    // Bold header row and auto-size
+    // Style header
     $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
     foreach (range('A', $sheet->getHighestColumn()) as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
@@ -102,11 +92,12 @@ if (isset($_GET['export'])) {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Reports</title>
+<title>Staff Reports</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
 <style>
-/* ------------------ VARIABLES ------------------ */
 :root {
   --bg: #121212;
   --panel: #1a1a1a;
@@ -116,7 +107,7 @@ if (isset($_GET['export'])) {
   --spacing: 20px;
 }
 
-/* ------------------ BASE ------------------ */
+/* Base */
 body {
   margin: 0;
   font-family: Poppins, sans-serif;
@@ -124,18 +115,17 @@ body {
   color: #fff;
 }
 
-/* ------------------ LAYOUT ------------------ */
+/* Layout */
 .page-container {
   margin-left: 210px;
   margin-top: 90px;
   padding: var(--spacing);
 }
 
-/* ------------------ TYPOGRAPHY ------------------ */
+/* Titles */
 h2 {
   color: var(--accent);
   margin-bottom: var(--spacing);
-  margin-left: 10px;
 }
 h3 {
   margin-bottom: 10px;
@@ -143,15 +133,16 @@ h3 {
   text-align: center;
 }
 
-/* ------------------ COMPONENTS ------------------ */
+/* Cards */
 .card {
   background: var(--panel);
   border-radius: var(--radius);
   padding: 18px;
   margin-bottom: var(--spacing);
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}       
+}
 
+/* Tables */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -167,6 +158,7 @@ h3 {
   font-weight: 600;
 }
 
+/* Buttons */
 .btn {
   background: var(--accent);
   color: #000;
@@ -181,7 +173,7 @@ h3 {
   background: #00e68a;
 }
 
-/* ------------------ UTILITIES ------------------ */
+/* Chart */
 canvas {
   max-width: 100%;
   height: 400px;
@@ -189,98 +181,130 @@ canvas {
 </style>
 </head>
 <body>
-<?php include 'layout/sidebar.php'; ?>
+
+<?php include 'layout/sidebar_staff.php'; ?>
 <?php include 'layout/header.php'; ?>
 
 <div class="page-container">
-  <h2><i class="bi bi-bar-chart"></i> Reports Dashboard</h2>
+  <h2><i class="bi bi-graph-up"></i> My Sales Report</h2>
 
   <!-- Export Buttons -->
   <div style="margin-bottom:var(--spacing);">
-    <a href="report.php?export=products" class="btn">Export Products</a>
-    <a href="report.php?export=sales" class="btn">Export Daily Sales</a>
-    <a href="report.php?export=invoices" class="btn">Export Invoices</a>
-  </div>
-
-  <!-- Products Table -->
-  <div class="card">
-    <h3>Products</h3>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>SKU</th><th>Product</th><th>Category</th><th>Quantity</th>
-          <th>Purchase Price</th><th>Selling Price</th><th>Reorder Level</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach($products as $p): ?>
-        <tr>
-          <td><?= htmlspecialchars($p['sku']) ?></td>
-          <td><?= htmlspecialchars($p['name']) ?></td>
-          <td><?= htmlspecialchars($p['category']) ?></td>
-          <td><?= htmlspecialchars($p['quantity']) ?></td>
-          <td><?= number_format($p['purchase_price'],2) ?></td>
-          <td><?= number_format($p['selling_price'],2) ?></td>
-          <td><?= $p['reorder_level'] ?></td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+    <a href="staff_report.php?export=sales" class="btn">Export My Sales</a>
+    <a href="staff_report.php?export=invoices" class="btn">Export My Invoices</a>
+    <button onclick="window.print()" class="btn">Print</button>
   </div>
 
   <!-- Daily Sales Chart -->
   <div class="card">
-    <h3>Daily Sales Trend</h3>
+    <h3>My Daily Sales Trend</h3>
     <canvas id="salesChart"></canvas>
+  </div>
+
+  <!-- Daily Sales Table -->
+  <div class="card">
+    <h3>My Daily Sales</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Total (XAF)</th>
+          <th>Paid (XAF)</th>
+          <th>Balance (XAF)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if(empty($sales)): ?>
+          <tr><td colspan="4">No sales records found</td></tr>
+        <?php else: ?>
+          <?php foreach($sales as $s): ?>
+          <tr>
+            <td><?= htmlspecialchars($s['sale_date']) ?></td>
+            <td><?= number_format($s['total_amount'], 2) ?></td>
+            <td><?= number_format($s['paid_amount'], 2) ?></td>
+            <td><?= number_format($s['balance'], 2) ?></td>
+          </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </tbody>
+    </table>
   </div>
 
   <!-- Invoices Table -->
   <div class="card">
-    <h3>Invoices</h3>
+    <h3>My Invoices</h3>
     <table class="table">
       <thead>
         <tr>
-          <th>Invoice No</th><th>Customer</th><th>Total (XAF)</th>
-          <th>Paid (XAF)</th><th>Balance (XAF)</th><th>Date</th>
+          <th>Invoice No</th>
+          <th>Customer</th>
+          <th>Total (XAF)</th>
+          <th>Paid (XAF)</th>
+          <th>Balance (XAF)</th>
+          <th>Date</th>
         </tr>
       </thead>
       <tbody>
-        <?php foreach($invoices as $inv): ?>
-        <tr>
-          <td><?= htmlspecialchars($inv['invoice_no']) ?></td>
-          <td><?= htmlspecialchars($inv['customer_name']) ?></td>
-          <td><?= number_format($inv['total_amount'],2) ?></td>
-          <td><?= number_format($inv['paid_amount'],2) ?></td>
-          <td><?= number_format($inv['balance'],2) ?></td>
-          <td><?= htmlspecialchars($inv['created_at']) ?></td>
-        </tr>
-        <?php endforeach; ?>
+        <?php if(empty($invoices)): ?>
+          <tr><td colspan="6">No invoices found</td></tr>
+        <?php else: ?>
+          <?php foreach($invoices as $inv): ?>
+          <tr>
+            <td><?= htmlspecialchars($inv['invoice_no']) ?></td>
+            <td><?= htmlspecialchars($inv['customer_name']) ?></td>
+            <td><?= number_format($inv['total_amount'], 2) ?></td>
+            <td><?= number_format($inv['paid_amount'], 2) ?></td>
+            <td><?= number_format($inv['balance'], 2) ?></td>
+            <td><?= htmlspecialchars($inv['created_at']) ?></td>
+          </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
       </tbody>
     </table>
   </div>
 </div>
 
 <script>
-// Chart.js daily sales
+// Chart.js daily sales (same logic as admin)
+const labels = <?= json_encode(array_reverse(array_column($sales, 'sale_date'))) ?>;
+const totals = <?= json_encode(array_reverse(array_map('floatval', array_column($sales, 'total_amount')))) ?>;
+
 const ctx = document.getElementById('salesChart').getContext('2d');
-const labels = <?= json_encode(array_column($sales, 'sale_date')) ?>;
-const totals = <?= json_encode(array_map('floatval', array_column($sales, 'total_amount'))) ?>;
 
 new Chart(ctx, {
   type: 'line',
   data: {
     labels,
     datasets: [{
-      label: 'Total Amount (XAF)',
+      label: 'My Sales (XAF)',
       data: totals,
       borderColor: '#00ff9d',
-      backgroundColor: 'rgba(0,255,157,0.2)',
+      backgroundColor: 'rgba(0,255,157,0.15)',
       fill: true,
-      tension: 0.3
+      tension: 0.35,
+      borderWidth: 2
     }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: { color: '#fff' }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#bdbdbd' },
+        grid: { color: '#222' }
+      },
+      y: {
+        ticks: { color: '#bdbdbd' },
+        grid: { color: '#222' }
+      }
+    }
   }
 });
 </script>
-<?php include 'layout/footer.php'; ?>
+<?php include '../layout/footer.php'; ?>
 </body>
 </html>

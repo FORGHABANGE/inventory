@@ -1,7 +1,8 @@
 <?php
+include 'auth_admin.php';
+
 // users.php
 require_once 'includes/db.php';
-session_start(); // ✅ VERY IMPORTANT
 
 $stmt = $pdo->query("
     SELECT u.id, u.username, u.full_name, u.is_active, r.name AS role_name
@@ -182,5 +183,6 @@ onclick="return confirm('Delete this user?')"><i class="bi bi-trash"></i>Delete<
 </div>
 </div>
 
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

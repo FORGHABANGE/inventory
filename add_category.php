@@ -1,6 +1,7 @@
 <?php
+include 'auth_admin.php';
+
 require_once 'includes/db.php';
-session_start();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $errors = [];
@@ -79,5 +80,6 @@ button{display:inline-flex;align-items:center;gap:8px;background:var(--accent);c
 </form>
 </div>
 </div>
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

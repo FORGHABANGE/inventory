@@ -1,11 +1,11 @@
 <?php
+include 'auth_admin.php';
+
 require_once 'includes/db.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 $errors = [];
-$admin_id = 1; // Admin user
 
-// Generate short invoice number
+/* Generate invoice number (preview only) */
 function generateInvoiceNo($pdo) {
     $stmt = $pdo->query("SELECT invoice_no FROM sales ORDER BY id DESC LIMIT 1");
     $last = $stmt->fetchColumn();
@@ -28,26 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        try {
-            $stmt = $pdo->prepare("
-                INSERT INTO sales (invoice_no, customer_name, total_amount, paid_amount, user_id)
-                VALUES (:invoice_no, :customer_name, 0, 0, :user_id)
-            ");
-            $stmt->execute([
-                ':invoice_no'   => $invoice_no,
-                ':customer_name'=> $customer_name,
-                ':user_id'      => $admin_id
-            ]);
+        /* Store temporarily — DO NOT INSERT YET */
+        $_SESSION['pending_sale'] = [
+            'invoice_no'   => $invoice_no,
+            'customer_name'=> $customer_name
+        ];
 
-            $sale_id = $pdo->lastInsertId();
-
-            // Redirect to add items immediately
-            header("Location: add_sale_items.php?sale_id=" . $sale_id);
-            exit;
-
-        } catch (Exception $e) {
-            $errors[] = "Database error: " . $e->getMessage();
-        }
+        /* Move to items page */
+        header("Location: add_sale_items.php");
+        exit;
     }
 }
 ?>
@@ -93,7 +82,7 @@ label{color:var(--muted);margin-top:12px;display:block;}
 
 <form method="POST">
 
-<label>Invoice Number (Auto-generated)</label>
+<label>Invoice Number (Preview)</label>
 <input type="text" value="<?= htmlspecialchars($invoice_no) ?>" readonly>
 
 <label>Customer Name</label>

@@ -1,20 +1,20 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
-$username = $_SESSION['username'] ?? 'Admin';
+$username = $_SESSION['username'] ?? 'Staff';
 ?>
+
 <header class="topbar">
     <span>Welcome, <?= htmlspecialchars($username) ?></span>
 </header>
 
 <div class="main-header">
-    <div class="welcome-text">Welcome, <?= $_SESSION['username']; ?></div>
+    <div class="welcome-text">
+        Welcome, <?= htmlspecialchars($username); ?> (Staff)
+    </div>
 
     <div class="header-right">
         <i class="bi bi-bell notification"></i>
-        <a href="auth/logout.php" class="logout">Logout</a>
+        <a href="logout.php" class="logout">Logout</a>
     </div>
 </div>
 
@@ -23,7 +23,7 @@ $username = $_SESSION['username'] ?? 'Admin';
     position: fixed;
     top: 0;
     left: 240px; /* Sidebar width */
-    right: 0;    /* Ensure header stretches fully to right */
+    right: 0;
     height: 65px;
 
     background: #1f1f1f;
@@ -33,17 +33,16 @@ $username = $_SESSION['username'] ?? 'Admin';
     justify-content: space-between;
     align-items: center;
 
-    padding: 0 30px;  /* Horizontal padding inside flex */
+    padding: 0 30px;
     box-shadow: 0 2px 10px rgba(0,255,157,0.15);
-    z-index: 9999; /* Always on top */
+    z-index: 9999;
 }
 
 .header-right {
     display: flex;
     align-items: center;
     gap: 25px;
-    white-space: nowrap; /* Prevent wrapping */
-    overflow: visible;   /* Ensure items are fully visible */
+    white-space: nowrap;
 }
 
 .notification {

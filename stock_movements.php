@@ -3,106 +3,114 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 session_start();
+
+/* ===============================
+   AUTH: ADMIN ONLY
+================================ */
 if (!isset($_SESSION['user_id'])) {
     header("Location: auth/login.php");
     exit;
 }
 
-include "includes/db.php";
+require_once "includes/db.php";
 
-// Debug: Check if $pdo exists
-if (!isset($pdo)) {
-    die('Database connection failed. Check includes/db.php');
-}
+/* ===============================
+   FETCH STOCK MOVEMENTS
+================================ */
+$query = "
+    SELECT 
+        sm.id,
+        sm.type,
+        sm.quantity,
+        sm.reference,
+        sm.note,
+        sm.created_at,
+        p.name AS product_name,
+        u.username AS user_name
+    FROM stock_movements sm
+    LEFT JOIN products p ON sm.product_id = p.id
+    LEFT JOIN users u ON sm.user_id = u.id
+    ORDER BY sm.id DESC
+";
+
+$stmt = $pdo->prepare($query);
+$stmt->execute();
+$movements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Movements - Inventory System</title>
+<meta charset="UTF-8">
+<title>Stock Movements</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-    <style>
-        body {
-            background: #121212;
-            font-family: "Poppins", sans-serif;
-            color: #fff;
-            margin: 0;
-        }
+<style>
+body{
+    background:#121212;
+    font-family:Poppins,sans-serif;
+    color:#fff;
+    margin:0;
+}
+.page-container{
+    margin-left:240px;
+    margin-top:90px;
+    padding:25px;
+}
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+.page-header h2{
+    color:#00ff9d;
+    margin:0;
+}
+.actions-group button{
+    background:#00ff9d;
+    color:#000;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    font-weight:600;
+    cursor:pointer;
+    margin-left:10px;
+}
+.actions-group button:hover{
+    opacity:0.9;
+}
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:#1a1a1a;
+    border-radius:12px;
+    overflow:hidden;
+}
+.table thead{
+    background:#00ff9d;
+    color:#000;
+}
+.table th,.table td{
+    padding:12px;
+    border-bottom:1px solid #333;
+    text-align:center;
+}
+.type-in{color:#00ff9d;font-weight:600;}
+.type-out{color:#ff4d4d;font-weight:600;}
+.type-adjust{color:#ffd700;font-weight:600;}
 
-        .page-container {
-            margin-left: 240px;
-            padding: 25px;
-            margin-top: 90px;
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .page-header h2 {
-            color: #00ff9d;
-            margin: 0;
-        }
-
-        .actions-group button {
-            background: #00ff9d;
-            color: #000;
-            border: none;
-            padding: 10px 18px;
-            margin-left: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .actions-group button:hover {
-            background: #00e68c;
-        }
-
-        .movement-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #1a1a1a;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .movement-table thead {
-            background: #00ff9d;
-            color: #000;
-        }
-
-        .movement-table th,
-        .movement-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #333;
-            text-align: center;
-        }
-
-        .type-in {
-            color: #00ff9d;
-            font-weight: 600;
-        }
-
-        .type-out {
-            color: #ff4d4d;
-            font-weight: 600;
-        }
-
-        .type-adjust {
-            color: #ffd700;
-            font-weight: 600;
-        }
-    </style>
+@media(max-width:768px){
+    .page-container{
+        margin-left:0;
+        margin-top:20px;
+    }
+}
+</style>
 </head>
+
 <body>
 
 <?php include "layout/sidebar.php"; ?>
@@ -110,91 +118,65 @@ if (!isset($pdo)) {
 
 <div class="page-container">
 
-    <div class="page-header">
-        <h2><i class="bi bi-arrow-left-right"></i> Stock Movements</h2>
+<div class="page-header">
+    <h2><i class="bi bi-arrow-left-right"></i> Stock Movements</h2>
 
-        <div class="actions-group">
-            <button onclick="window.location.href='stock_in.php'">
-                <i class="bi bi-plus-circle"></i> Stock In
-            </button>
-
-            <button onclick="window.location.href='stock_out.php'">
-                <i class="bi bi-dash-circle"></i> Stock Out
-            </button>
-
-            <button onclick="window.location.href='stock_adjust.php'">
-                <i class="bi bi-sliders"></i> Adjust Stock
-            </button>
-        </div>
+    <div class="actions-group">
+        <button onclick="location.href='stock_in.php'">
+            <i class="bi bi-plus-circle"></i> Stock In
+        </button>
+        <button onclick="location.href='stock_out.php'">
+            <i class="bi bi-dash-circle"></i> Stock Out
+        </button>
+        <button onclick="location.href='stock_adjust.php'">
+            <i class="bi bi-sliders"></i> Adjust
+        </button>
     </div>
+</div>
 
-    <table class="movement-table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Product</th>
-                <th>Type</th>
-                <th>Quantity</th>
-                <th>Reference</th>
-                <th>Note</th>
-                <th>User</th>
-            </tr>
-        </thead>
+<table class="table">
+<thead>
+<tr>
+    <th>Date</th>
+    <th>Product</th>
+    <th>Type</th>
+    <th>Quantity</th>
+    <th>Reference</th>
+    <th>Note</th>
+    <th>User</th>
+</tr>
+</thead>
+<tbody>
 
-        <tbody>
-        <?php
-        $query = "
-            SELECT sm.*, p.name AS product_name, u.name AS user_name
-            FROM stock_movements sm
-            LEFT JOIN products p ON sm.product_id = p.id
-            LEFT JOIN users u ON sm.user_id = u.id
-            ORDER BY sm.created_at DESC
-        ";
+<?php if ($movements): ?>
+    <?php foreach ($movements as $m): 
+        $type = strtoupper($m['type']);
+        $typeClass = ($type === 'IN') ? 'type-in' :
+                     (($type === 'OUT') ? 'type-out' : 'type-adjust');
+        $typeLabel = ($type === 'IN') ? 'Stock In' :
+                     (($type === 'OUT') ? 'Stock Out' : 'Adjustment');
+    ?>
+    <tr>
+        <td><?= date("Y-m-d H:i", strtotime($m['created_at'])) ?></td>
+        <td><?= htmlspecialchars($m['product_name'] ?? '—') ?></td>
+        <td class="<?= $typeClass ?>"><?= $typeLabel ?></td>
+        <td><?= htmlspecialchars($m['quantity']) ?></td>
+        <td><?= htmlspecialchars($m['reference'] ?? '-') ?></td>
+        <td><?= htmlspecialchars($m['note'] ?? '-') ?></td>
+        <td><?= htmlspecialchars($m['user_name'] ?? 'System') ?></td>
+    </tr>
+    <?php endforeach; ?>
+<?php else: ?>
+<tr>
+    <td colspan="7" style="padding:20px;color:#aaa;">No stock movements recorded</td>
+</tr>
+<?php endif; ?>
 
-        try {
-            $stmt = $pdo->query($query);
-            $movements = $stmt->fetchAll();
-        } catch (Exception $e) {
-            $movements = [];
-        }
-
-        // Debug: Check number of movements
-        echo "<!-- Debug: Found " . count($movements) . " movements -->";
-
-         if ($movements) {
-             foreach ($movements as $m) {
-                 $typeLower = strtolower($m['type']);
-                 $typeClass = ($typeLower == 'in') ? 'type-in' :
-                              (($typeLower == 'out') ? 'type-out' : 'type-adjust');
-                $typeDisplay = ($typeLower == 'in') ? 'Stock In' :
-                               (($typeLower == 'out') ? 'Stock Out' : 'Adjustment');
-                $productName = $m['product_name'] ? htmlspecialchars($m['product_name']) : '—';
-                $userName = $m['user_name'] ? htmlspecialchars($m['user_name']) : 'System';
-                $reference = $m['reference'] ? htmlspecialchars($m['reference']) : '-';
-                $note = $m['note'] ? htmlspecialchars($m['note']) : '-';
-                $date = isset($m['created_at']) ? date("Y-m-d H:i", strtotime($m['created_at'])) : '-';
-                $qty = htmlspecialchars($m['quantity']);
-                $type = htmlspecialchars($typeDisplay);
-         ?>
-             <tr>
-                <td><?= $date ?></td>
-                <td><?= $productName ?></td>
-                <td class="<?= $typeClass ?>"><?= $type ?></td>
-                <td><?= $qty ?></td>
-                <td><?= $reference ?></td>
-                <td><?= $note ?></td>
-                <td><?= $userName ?></td>
-             </tr>
-         <?php }
-         } else { ?>
-            <tr>
-                <td colspan="7" style="padding: 20px; color: #aaa;">No stock movement records found</td>
-            </tr>
-        <?php } ?>
-        </tbody>
-    </table>
+</tbody>
+</table>
 
 </div>
 
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

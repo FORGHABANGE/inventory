@@ -1,9 +1,15 @@
-<?php                                                                                                                                          
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: auth/login.php");
-    exit;
-}
+<?php
+include 'auth_admin.php';
+
+// Database connection
+require_once 'includes/db.php';
+
+// Fetch metrics
+$totalProducts = $pdo->query("SELECT COUNT(*) FROM products WHERE is_active = 1")->fetchColumn();
+$totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+$lowStock = $pdo->query("SELECT COUNT(*) FROM products WHERE quantity <= reorder_level AND is_active = 1")->fetchColumn();
+$salesToday = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE DATE(created_at) = CURDATE()")->fetchColumn();
+$newOrders = $pdo->query("SELECT COUNT(*) FROM sales WHERE DATE(created_at) = CURDATE()")->fetchColumn();
 ?>
 
 <!DOCTYPE html>
@@ -44,6 +50,7 @@ if (!isset($_SESSION['user_id'])) {
             box-shadow: 0 0 10px rgba(0,255,157,0.2);
             transition: 0.3s ease;
             text-align: center;
+            cursor: pointer;
         }
 
         .card h3 {
@@ -65,25 +72,25 @@ if (!isset($_SESSION['user_id'])) {
 <?php include "layout/footer.php"; ?>
 
 <div class="dashboard-container">
-    <div class="card">
+    <div class="card" onclick="location.href='product.php';">
         Total Products
-        <h3>0</h3>
+        <h3><?= $totalProducts ?></h3>
     </div>
-    <div class="card">
+    <div class="card" onclick="location.href='sales.php?filter=today';">
         Sales Today
-        <h3>0</h3>
+        <h3>$<?= number_format($salesToday, 2) ?></h3>
     </div>
-    <div class="card">
+    <div class="card" onclick="location.href='users.php';">
         Total Users
-        <h3>0</h3>
+        <h3><?= $totalUsers ?></h3>
     </div>
-    <div class="card">
-        Low Stock
-        <h3>0</h3>
+    <div class="card" onclick="location.href='stock_movements.php';">
+        Low Stock Items
+        <h3><?= $lowStock ?></h3>
     </div>
-    <div class="card">
-        New Orders
-        <h3>0</h3>
+    <div class="card" onclick="location.href='sales.php';">
+        New Orders Today
+        <h3><?= $newOrders ?></h3>
     </div>
     
 </div>

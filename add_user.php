@@ -1,6 +1,7 @@
 <?php
+include 'auth_admin.php';
+
 require_once 'includes/db.php';
-session_start();
 
 $roles = $pdo->query("SELECT id, name FROM roles")->fetchAll();
 
@@ -74,5 +75,6 @@ background:#0f0f0f;border:1px solid #222;color:#fff;border-radius:8px
 
 </div>
 </div>
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

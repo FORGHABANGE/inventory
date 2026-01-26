@@ -2,15 +2,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-session_start();
-
-/* ===============================
-   AUTH & ROLE CHECK
-================================ */
-if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
-    header("Location: ../login.php");
-    exit;
-}
+include 'auth_staff.php';
 
 $staff_id = $_SESSION['user_id'];
 $staff_name = $_SESSION['full_name'] ?? 'Staff';
@@ -163,7 +155,7 @@ h2{
 <body>
 
 <?php include 'layout/sidebar_staff.php'; ?>  
-<?php include '../layout/header.php'; ?>       
+<?php include 'layout/header.php'; ?>       
 
 <div class="page-container">
 

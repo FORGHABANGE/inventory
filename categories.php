@@ -1,7 +1,8 @@
 <?php
+include 'auth_admin.php';
+
 // categories.php
 require_once 'includes/db.php';
-session_start();
 
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -207,5 +208,6 @@ th{
     </div>
 </div>
 
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

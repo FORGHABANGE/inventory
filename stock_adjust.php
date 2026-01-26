@@ -1,73 +1,103 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: auth/login.php");
-    exit;
-}
+include 'auth_admin.php';
 
-include "includes/db.php";
+require_once "includes/db.php";
 
 $errors = [];
 $success = '';
 
+/* ===============================
+   HANDLE FORM SUBMISSION
+================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $product_id = !empty($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
-    $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 0;
-    $adjust_type = $_POST['adjust_type'] ?? 'IN'; // IN or OUT
-    $reference = trim($_POST['reference'] ?? '');
-    $note = trim($_POST['note'] ?? '');
 
-    // Validation
+    $product_id  = (int)($_POST['product_id'] ?? 0);
+    $quantity    = (int)($_POST['quantity'] ?? 0);
+    $adjust_type = $_POST['adjust_type'] ?? 'IN'; // IN | OUT
+    $reference   = trim($_POST['reference'] ?? '');
+    $note        = trim($_POST['note'] ?? '');
+    $user_id     = $_SESSION['user_id'];
+
     if ($product_id <= 0) $errors[] = "Please select a product.";
-    if ($quantity <= 0) $errors[] = "Quantity must be greater than zero.";
-    if (!in_array($adjust_type, ['IN','OUT'])) $errors[] = "Invalid adjustment type.";
-
-    if (empty($errors)) {
-        // Fetch current quantity
-        $stmt = $pdo->prepare("SELECT quantity FROM products WHERE id = :id");
-        $stmt->execute([':id' => $product_id]);
-        $product = $stmt->fetch();
-
-        if (!$product) {
-            $errors[] = "Selected product not found.";
-        } elseif ($adjust_type === 'OUT' && $product['quantity'] < $quantity) {
-            $errors[] = "Insufficient stock to decrease. Current: {$product['quantity']}";
-        }
+    if ($quantity <= 0)   $errors[] = "Quantity must be greater than zero.";
+    if (!in_array($adjust_type, ['IN', 'OUT'])) {
+        $errors[] = "Invalid adjustment type.";
     }
 
-    // Insert stock adjustment
     if (empty($errors)) {
-        try {
-            $stmt = $pdo->prepare("INSERT INTO stock_movements
-                (product_id, type, quantity, reference, note, user_id, created_at)
-                VALUES (:product_id, 'adjustment', :quantity, :reference, :note, :user_id, NOW())");
 
-            $stmt->execute([
-                ':product_id' => $product_id,
-                ':quantity' => $quantity,
-                ':reference' => $reference,
-                ':note' => $note,
-                ':user_id' => $_SESSION['user_id']
+        try {
+            $pdo->beginTransaction();
+
+            /* Lock product */
+            $lock = $pdo->prepare("
+                SELECT quantity 
+                FROM products 
+                WHERE id = ? 
+                FOR UPDATE
+            ");
+            $lock->execute([$product_id]);
+            $product = $lock->fetch(PDO::FETCH_ASSOC);
+
+            if (!$product) {
+                throw new Exception("Selected product not found.");
+            }
+
+            if ($adjust_type === 'OUT' && $product['quantity'] < $quantity) {
+                throw new Exception(
+                    "Insufficient stock. Current quantity: {$product['quantity']}."
+                );
+            }
+
+            /* Insert stock movement */
+            $insertMovement = $pdo->prepare("
+                INSERT INTO stock_movements
+                (product_id, type, quantity, reference, note, user_id)
+                VALUES (?,?,?,?,?,?)
+            ");
+            $insertMovement->execute([
+                $product_id,
+                'ADJUST',
+                $quantity,
+                $reference ?: 'ADMIN-ADJUST',
+                $note,
+                $user_id
             ]);
 
-            // Update product quantity
+            /* Update product quantity */
             if ($adjust_type === 'IN') {
-                $update = $pdo->prepare("UPDATE products SET quantity = quantity + :qty WHERE id = :id");
+                $update = $pdo->prepare("
+                    UPDATE products 
+                    SET quantity = quantity + ? 
+                    WHERE id = ?
+                ");
             } else {
-                $update = $pdo->prepare("UPDATE products SET quantity = quantity - :qty WHERE id = :id");
+                $update = $pdo->prepare("
+                    UPDATE products 
+                    SET quantity = quantity - ? 
+                    WHERE id = ?
+                ");
             }
-            $update->execute([':qty' => $quantity, ':id' => $product_id]);
+            $update->execute([$quantity, $product_id]);
 
+            $pdo->commit();
             $success = "Stock adjustment completed successfully.";
 
         } catch (Exception $e) {
-            $errors[] = "Database error: " . $e->getMessage();
+            $pdo->rollBack();
+            $errors[] = $e->getMessage();
         }
     }
 }
 
-// Fetch products for dropdown
-$products = $pdo->query("SELECT id, name FROM products ORDER BY name ASC")->fetchAll();
+/* ===============================
+   FETCH PRODUCTS
+================================ */
+$products = $pdo->query("
+    SELECT id, name 
+    FROM products 
+    ORDER BY name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -341,5 +371,6 @@ form textarea {
     </div>
 </div>
 
+<?php include 'layout/footer.php'; ?>
 </body>
 </html>

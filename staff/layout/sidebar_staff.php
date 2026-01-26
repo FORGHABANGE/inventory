@@ -1,11 +1,4 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-
-/* Safety check (extra layer) */
-if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
-    header("Location: ../login.php");
-    exit;
-}
 ?>
 <style>
 .sidebar{
@@ -106,7 +99,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
         Stock Movements
     </a>
 
-    <a href="reports.php">
+    <a href="report.php">
         <i class="bi bi-graph-up"></i>
         Reports
     </a>
