@@ -99,34 +99,76 @@ th{
     margin-bottom:15px;
 }
 
-/* 📱 MOBILE ONLY */
-@media (max-width:720px){
-    .page-container{
-        margin-left:0;
-        margin-top:20px;
-        padding:20px;
+/* 📱 Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 100px;
+        padding: 15px;
     }
 
-    table, thead, tbody, th, td, tr{
-        display:block;
-        width:100%;
+    table {
+        font-size: 13px;
     }
 
-    thead{ display:none; }
+    th, td {
+        padding: 8px;
+    }
+}
 
-    tr{
-        margin-bottom:15px;
-        border:1px solid #222;
-        border-radius:8px;
-        padding:12px;
+@media (max-width: 768px) {
+    .page-container {
+        margin-left: 0;
+        width: 100%;
+        padding: 12px;
     }
 
-    td{
-        border:none;
-        padding:6px 0;
+    .page-header {
+        flex-direction: column;
+        gap: 10px;
     }
 
-    td::before{
+    .btn {
+        width: 100%;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        padding: 10px;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tr {
+        margin-bottom: 12px;
+        border: 1px solid #222;
+        border-radius: 6px;
+        padding: 10px;
+    }
+
+    td {
+        border: none;
+        padding: 6px 0;
+    }
+
+    td::before {
         content: attr(data-label);
         display:block;
         color:var(--muted);

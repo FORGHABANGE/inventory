@@ -98,6 +98,67 @@ $categories = $catStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => name
 
     .badge-ok { color: #00ff9d; font-weight: 600; }
     .badge-low { color: #ff4d4d; font-weight: 600; }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .page-container {
+            margin-left: 0;
+            margin-top: 100px;
+            padding: 12px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .add-btn {
+            width: 100%;
+        }
+
+        .product-table {
+            font-size: 13px;
+        }
+
+        .product-table th,
+        .product-table td {
+            padding: 8px 5px;
+            font-size: 12px;
+        }
+
+        .product-img {
+            width: 35px;
+            height: 35px;
+        }
+
+        .actions i {
+            font-size: 16px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .product-table {
+            font-size: 11px;
+            display: block;
+            overflow-x: auto;
+        }
+
+        .product-table th,
+        .product-table td {
+            padding: 6px 4px;
+            font-size: 11px;
+        }
+
+        .product-img {
+            width: 30px;
+            height: 30px;
+        }
+
+        .actions i {
+            font-size: 14px;
+            padding: 4px;
+        }
+    }
 </style>
 </head>
 <body>
@@ -160,7 +221,11 @@ $categories = $catStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => name
         ?>
 
             <tr>
-                <td><img src="<?= htmlspecialchars($img) ?>" class="product-img" alt="<?= htmlspecialchars($row['name']) ?>"></td>
+                <td>
+                    <a href="#" class="img-link" data-img="<?= htmlspecialchars($img) ?>" data-alt="<?= htmlspecialchars($row['name']) ?>" data-desc="<?= htmlspecialchars($row['description'] ?? '') ?>">
+                        <img src="<?= htmlspecialchars($img) ?>" class="product-img" alt="<?= htmlspecialchars($row['name']) ?>">
+                    </a>
+                </td>
                 <td><?= htmlspecialchars($row['sku']) ?></td>
                 <td><?= htmlspecialchars($row['name']) ?></td>
                 <td><?= htmlspecialchars($row['quantity']) ?></td>
@@ -188,6 +253,97 @@ $categories = $catStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => name
     </table>
 
 </div>
+<!-- Image Modal -->
+<!-- Inline image popup card (appears at click position) -->
+<div id="imgPopup" class="img-popup" style="display:none; position:absolute; z-index:2000;">
+    <div class="popup-card" style="background:#1a1a1a; color:#fff; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.6); overflow:hidden; max-width:720px; min-width:420px; width:auto;">
+        <div class="popup-close" style="position:absolute; right:8px; top:8px; z-index:2010; cursor:pointer; color:#fff; font-size:22px;">&times;</div>
+        <div class="popup-image" style="padding:14px; text-align:center;">
+        <img id="popupImg" src="" alt="" style="max-width:100%; max-height:80vh; border-radius:6px;">
+        </div>
+        <div class="popup-body" style="padding:12px; border-top:1px solid #222;">
+            <h4 id="popupTitle" style="margin:0 0 8px 0; color:#00ff9d; font-size:16px;"></h4>
+            <p id="popupDesc" style="margin:0; color:#bdbdbd; font-size:14px; white-space:pre-wrap;"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const popup = document.getElementById('imgPopup');
+    const card = popup.querySelector('.popup-card');
+    const imgEl = document.getElementById('popupImg');
+    const titleEl = document.getElementById('popupTitle');
+    const descEl = document.getElementById('popupDesc');
+
+    function hidePopup(){
+        popup.style.display = 'none';
+        imgEl.src = '';
+        titleEl.textContent = '';
+        descEl.textContent = '';
+    }
+
+    document.querySelectorAll('.img-link').forEach(el=>{
+        el.addEventListener('click', function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            const src = this.getAttribute('data-img');
+            const alt = this.getAttribute('data-alt') || '';
+            const desc = this.getAttribute('data-desc') || '';
+
+            imgEl.src = src;
+            imgEl.alt = alt;
+            titleEl.textContent = alt;
+            descEl.textContent = desc;
+
+            // temporarily show to measure
+            popup.style.display = 'block';
+            card.style.visibility = 'hidden';
+            card.style.display = 'block';
+
+            const rect = card.getBoundingClientRect();
+            let left = e.pageX + 12;
+            let top = e.pageY + 12;
+
+            // adjust horizontal overflow
+            const viewportRight = window.scrollX + window.innerWidth;
+            if (left + rect.width > viewportRight) {
+                left = e.pageX - rect.width - 12;
+            }
+            if (left < window.scrollX + 8) left = window.scrollX + 8;
+
+            // adjust vertical overflow
+            const viewportBottom = window.scrollY + window.innerHeight;
+            if (top + rect.height > viewportBottom) {
+                top = e.pageY - rect.height - 12;
+            }
+            if (top < window.scrollY + 8) top = window.scrollY + 8;
+
+            popup.style.left = left + 'px';
+            popup.style.top = top + 'px';
+            card.style.visibility = 'visible';
+        });
+    });
+
+    // close button
+    popup.querySelector('.popup-close').addEventListener('click', function(e){
+        e.stopPropagation();
+        hidePopup();
+    });
+
+    // hide when clicking outside
+    document.addEventListener('click', function(e){
+        if (!popup.contains(e.target)) hidePopup();
+    });
+
+    // hide on escape
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') hidePopup(); });
+})();
+</script>
+
+<?php include 'layout/footer.php'; ?>
+</body>
+</html>
 
 <?php include 'layout/footer.php'; ?>
 </body>

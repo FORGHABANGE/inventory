@@ -287,33 +287,30 @@ form textarea {
     font-weight: 600;
 }
 
-/* =========================
-   Responsive Design
-========================= */
-@media (max-width: 720px) {
-    .page-container {
-        margin-left: 0;
-        padding: 15px;
-        margin-top: 70px;
-    }
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    select, input { padding: 8px; font-size: 14px; }
+    .movement-table th, .movement-table td { padding: 8px; font-size: 13px; }
+}
 
-    .actions-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    select, input { padding: 8px; font-size: 13px; }
+    .btn { width: 100%; }
+    .actions-group { flex-direction: column; gap: 8px; }
+    .movement-table th, .movement-table td { padding: 6px; font-size: 12px; }
+}
 
-    .actions-group button {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .movement-table th,
-    .movement-table td {
-        padding: 8px 10px;
-        font-size: 12px;
-    }
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    h2 { font-size: 18px; }
+    label { font-size: 13px; }
+    select, input { padding: 6px; font-size: 12px; }
+    .btn { width: 100%; padding: 10px; font-size: 12px; }
+    .actions-group { gap: 6px; }
+    .movement-table { font-size: 11px; display: block; overflow-x: auto; }
+    .movement-table th, .movement-table td { padding: 5px; font-size: 11px; }
 }
 </style>
 </head>

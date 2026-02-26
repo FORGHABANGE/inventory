@@ -144,6 +144,28 @@ input, select{
         width:100%;
     }
 }
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; width: 100%; margin-top: 100px; padding: 15px; }
+    .card { width: 100%; padding: 15px; }
+    input, select { padding: 8px 10px; font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; width: 100%; padding: 12px; }
+    .card { width: 100%; padding: 12px; }
+    input, select { padding: 8px; font-size: 13px; }
+    .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .card { padding: 10px; }
+    h2 { font-size: 18px; }
+    label { font-size: 13px; margin-top: 8px; }
+    input, select { padding: 6px; font-size: 12px; }
+    .btn { width: 100%; padding: 10px; font-size: 12px; }
+}
 </style>
 </head>
 

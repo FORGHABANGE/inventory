@@ -282,29 +282,71 @@ form textarea {
 /* =========================
    Responsive Design
 ========================= */
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
     .page-container {
         margin-left: 0;
+        margin-top: 100px;
         padding: 15px;
-        margin-top: 70px;
     }
-
-    .actions-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-bottom: 20px;
+    form input[type="number"],
+    form input[type="text"],
+    form select {
+        font-size: 14px;
+        padding: 8px;
     }
-
-    .actions-group button {
-        margin-left: 0;
-        width: 100%;
-    }
-
     .movement-table th,
     .movement-table td {
         padding: 8px 10px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        margin-left: 0;
+        padding: 12px;
+    }
+    form input[type="number"],
+    form input[type="text"],
+    form select {
+        font-size: 13px;
+        padding: 6px;
+    }
+    .btn { width: 100%; }
+    .movement-table th,
+    .movement-table td {
+        padding: 6px 8px;
         font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        padding: 10px;
+    }
+    h2 { font-size: 18px; }
+    label { font-size: 13px; }
+    form input[type="number"],
+    form input[type="text"],
+    form select {
+        font-size: 12px;
+        padding: 6px;
+    }
+    .btn { width: 100%; padding: 10px; font-size: 12px; }
+    .movement-table, .movement-table thead, .movement-table tbody, .movement-table th, .movement-table td, .movement-table tr {
+        display: block;
+    }
+    .movement-table thead {
+        display: none;
+    }
+    .movement-table tr {
+        margin-bottom: 10px;
+        border: 1px solid #222;
+        padding: 8px;
+    }
+    .movement-table td {
+        padding: 5px 0;
+        font-size: 11px;
     }
 }
 

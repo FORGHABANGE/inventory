@@ -57,6 +57,28 @@ button{display:inline-flex;align-items:center;gap:8px;background:var(--accent);c
 .messages .error{background: rgba(255,77,77,0.12); color: var(--danger); padding:10px; border-radius:8px; margin-bottom:6px;}
 .messages .success{background: rgba(0,255,157,0.12); color:#00ff9d; padding:10px; border-radius:8px; margin-bottom:6px;}
 @media(max-width:720px){.page-container{margin-left:0;padding:20px;margin-top:20px;}}
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; width: 100%; margin-top: 100px; padding: 15px; }
+    .card { width: 100%; padding: 15px; }
+    input, textarea { padding: 8px 10px; font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; width: 100%; padding: 12px; }
+    .card { width: 100%; padding: 12px; }
+    input, textarea { padding: 8px; font-size: 13px; }
+    .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .card { padding: 10px; }
+    h2 { font-size: 18px; }
+    label { font-size: 13px; margin-top: 8px; }
+    input, textarea { padding: 6px; font-size: 12px; }
+    .btn { width: 100%; padding: 10px; font-size: 12px; }
+}
 </style>
 </head>
 <body>

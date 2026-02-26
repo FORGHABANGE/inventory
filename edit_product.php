@@ -167,7 +167,34 @@ button {
 button:hover {
     background:#00e68c;
 }
-</style>
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    .form-box { max-width: 100%; padding: 15px; }
+    input, select { font-size: 14px; padding: 8px; }
+    img.preview { width: 60px; height: 60px; }
+    button { padding: 10px 16px; font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { padding: 12px; }
+    .form-box { padding: 12px; }
+    input, select { font-size: 13px; padding: 6px; }
+    label { margin-top: 8px; font-size: 13px; }
+    img.preview { width: 50px; height: 50px; }
+    button { width: 100%; padding: 10px; font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .form-box { padding: 10px; }
+    h2 { font-size: 18px; }
+    input, select { font-size: 12px; padding: 6px; }
+    label { margin-top: 6px; font-size: 12px; }
+    img.preview { width: 40px; height: 40px; }
+    button { width: 100%; padding: 8px; font-size: 12px; margin-top: 12px; }
+}
 </head>
 
 <body>

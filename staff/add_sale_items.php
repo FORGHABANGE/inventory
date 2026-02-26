@@ -147,7 +147,31 @@ select,input{padding:8px;border-radius:8px;border:1px solid #222;background:#0f0
 .btn.danger{background:var(--danger);color:#fff;}
 .btn.secondary{background:#2a2a2a;color:#bdbdbd;}
 .alert{background:rgba(255,77,77,0.12);color:var(--danger);padding:10px;border-radius:8px;margin-bottom:10px;}
-@media(max-width:720px){.page-container{margin-left:0;margin-top:20px;padding:20px}}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    .table { font-size: 13px; }
+    th, td { padding: 8px; }
+    select, input { font-size: 14px; padding: 8px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    .table { font-size: 12px; }
+    th, td { padding: 6px; }
+    select, input { font-size: 13px; padding: 6px; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .table, .table thead, .table tbody, .table th, .table td, .table tr { display: block; }
+    .table thead { display: none; }
+    .table tr { margin-bottom: 10px; border: 1px solid #222; padding: 8px; }
+    .table td { padding: 5px 0; font-size: 11px; }
+    select, input { font-size: 12px; padding: 6px; }
+    .btn { width: 100%; font-size: 12px; }
+}
 </style>
 </head>
 <body>

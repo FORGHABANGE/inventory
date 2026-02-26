@@ -62,9 +62,26 @@ h2{color:var(--accent)}
 .btn-add{background:var(--accent);color:#000;padding:8px 14px}
 .empty{text-align:center;color:var(--muted);padding:20px}
 
-@media(max-width:720px){
-    .page-container{margin-left:0;margin-top:20px;padding:20px}
-    .header-row{flex-direction:column;align-items:flex-start;gap:10px}
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    table { font-size: 13px; }
+    th, td { padding: 8px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    table { font-size: 12px; }
+    th, td { padding: 6px; }
+    .btn-add { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+    tr { margin-bottom: 10px; border: 1px solid #222; padding: 8px; }
+    td { padding: 5px 0; font-size: 11px; }
 }
 </style>
 </head>

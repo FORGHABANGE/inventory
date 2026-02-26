@@ -136,12 +136,28 @@ h2{
     font-size:13px;
     display:block;
 }
-@media(max-width:720px){
-    .page-container{
-        margin-left:0;
-        margin-top:20px;
-        padding:20px;
-    }
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    .table { font-size: 13px; }
+    th, td { padding: 8px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    .table { font-size: 12px; }
+    th, td { padding: 6px; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .table, .table thead, .table tbody, .table th, .table td, .table tr { display: block; }
+    .table thead { display: none; }
+    .table tr { margin-bottom: 10px; border: 1px solid #222; padding: 8px; }
+    .table td { padding: 5px 0; font-size: 11px; }
+    .btn { width: 100%; font-size: 12px; }
+    .summary { grid-template-columns: 1fr; gap: 8px; }
 }
 </style>
 </head>

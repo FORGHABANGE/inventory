@@ -184,7 +184,34 @@ input[type="file"]{margin-top:8px;color:#fff;}
 .messages .success{background: rgba(0,255,157,0.12); color:#00ff9d; padding:10px; border-radius:8px; margin-bottom:6px;}
 .field-row{display:flex;gap:12px;align-items:center;}
 .small{font-size:13px;color:var(--muted);}
-@media(max-width:720px){.two-cols{grid-template-columns:1fr;}.page-container{margin-left:0;padding:20px;margin-top:20px;}}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; width: 100%; margin-top: 100px; padding: 15px; }
+    .two-cols { grid-template-columns: 1fr; gap: 10px; }
+    .card { width: 100%; padding: 15px; }
+    input, select, textarea { padding: 8px 10px; font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; width: 100%; padding: 12px; }
+    .two-cols { grid-template-columns: 1fr; gap: 8px; }
+    .card { width: 100%; padding: 12px; }
+    .preview img { max-width: 100px; }
+    input, select, textarea { padding: 8px; font-size: 13px; }
+    .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .card { padding: 10px; }
+    h2 { font-size: 18px; }
+    label { font-size: 13px; margin-top: 8px; }
+    input, select, textarea { padding: 6px; font-size: 12px; }
+    .field-row { flex-direction: column; gap: 6px; }
+    .preview img { max-width: 80px; }
+    .btn { width: 100%; padding: 10px; font-size: 12px; }
+}
 </style>
 </head>
 <body>

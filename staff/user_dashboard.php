@@ -49,6 +49,11 @@ $lowStockStmt = $pdo->query("
     LIMIT 5
 ");
 $lowStockProducts = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Staff daily sales for chart (last 14 days)
+$salesChartStmt = $pdo->prepare("SELECT DATE(created_at) AS sale_date, SUM(total_amount) AS total_amount FROM sales WHERE user_id = ? GROUP BY DATE(created_at) ORDER BY sale_date DESC LIMIT 14");
+$salesChartStmt->execute([$staff_id]);
+$salesChart = array_reverse($salesChartStmt->fetchAll(PDO::FETCH_ASSOC));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -142,11 +147,92 @@ h2{
     color:var(--muted);
 }
 
-@media(max-width:720px){
-    .page-container{
-        margin-left:0;
-        margin-top:20px;
-        padding:20px;
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container {
+        margin-left: 0;
+        margin-top: 100px;
+        padding: 15px;
+    }
+
+    .cards {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .card strong {
+        font-size: 22px;
+    }
+
+    .table th, .table td {
+        padding: 8px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        margin-left: 0;
+        margin-top: 100px;
+        padding: 12px;
+    }
+
+    .cards {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+
+    .card {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .card strong {
+        font-size: 20px;
+    }
+
+    .table th, .table td {
+        padding: 6px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        margin-left: 0;
+        margin-top: 100px;
+        padding: 10px;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .card {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .card strong {
+        font-size: 18px;
+    }
+
+    .table {
+        font-size: 11px;
+    }
+
+    .table th, .table td {
+        padding: 5px;
+        font-size: 11px;
+    }
+
+    h2 {
+        font-size: 18px;
     }
 }
 </style>
@@ -208,6 +294,34 @@ h2{
     </table>
 </div>
 <?php endif; ?>
+
+<!-- STAFF DAILY SALES CHART -->
+<div class="card" style="margin-top:20px; margin-bottom:30px;">
+    <h3 style="margin-top:0;color:var(--accent)"><i class="bi bi-graph-up"></i> My Daily Sales</h3>
+    <canvas id="staffSalesChart" style="width:100%; height:300px;"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const staffLabels = <?= json_encode(array_column($salesChart, 'sale_date')) ?>;
+const staffTotals = <?= json_encode(array_map('floatval', array_column($salesChart, 'total_amount'))) ?>;
+const staffCtx = document.getElementById('staffSalesChart').getContext('2d');
+new Chart(staffCtx, {
+    type: 'line',
+    data: {
+        labels: staffLabels,
+        datasets: [{
+            label: 'My Sales (XAF)',
+            data: staffTotals,
+            borderColor: '#00ff9d',
+            backgroundColor: 'rgba(0,255,157,0.12)',
+            fill: true,
+            tension: 0.3
+        }]
+    },
+    options: { responsive: true }
+});
+</script>
 
 </div>
 

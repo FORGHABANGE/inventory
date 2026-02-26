@@ -100,13 +100,27 @@ body{
 }
 .type-in{color:#00ff9d;font-weight:600;}
 .type-out{color:#ff4d4d;font-weight:600;}
-.type-adjust{color:#ffd700;font-weight:600;}
+.type-adjust{color:#ffa500;}
 
-@media(max-width:768px){
-    .page-container{
-        margin-left:0;
-        margin-top:20px;
-    }
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    .table { font-size: 13px; }
+    th, td { padding: 8px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    .table { font-size: 12px; }
+    th, td { padding: 6px; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .table, .table thead, .table tbody, .table th, .table td, .table tr { display: block; }
+    .table thead { display: none; }
+    .table tr { margin-bottom: 10px; border: 1px solid #222; padding: 8px; }
+    .table td { padding: 5px 0; font-size: 11px; }
 }
 </style>
 </head>

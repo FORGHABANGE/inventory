@@ -127,7 +127,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['items'])) {
 
         $pdo->commit();
 
-        header("Location: sale_items.php?sale_id=" . $sale_id);
+        // Redirect based on user role: staff users go to staff sale view
+        $redirectUrl = 'sale_items.php?sale_id=' . $sale_id;
+        if (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 2) {
+            $redirectUrl = 'staff/sale_items.php?sale_id=' . $sale_id;
+        }
+
+        header("Location: " . $redirectUrl);
         exit;
 
     } catch (Exception $e) {

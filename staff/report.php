@@ -94,7 +94,6 @@ if (isset($_GET['export'])) {
 <meta charset="utf-8">
 <title>Staff Reports</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
 <style>
@@ -178,6 +177,43 @@ canvas {
   max-width: 100%;
   height: 400px;
 }
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    .table { font-size: 13px; }
+    th, td { padding: 8px; }
+    canvas { height: 350px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    .table { font-size: 12px; }
+    th, td { padding: 6px; }
+    canvas { height: 300px; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .table, .table thead, .table tbody, .table th, .table td, .table tr { display: block; }
+    .table thead { display: none; }
+    .table tr { margin-bottom: 10px; border: 1px solid #222; padding: 8px; }
+    .table td { padding: 5px 0; font-size: 11px; }
+    canvas { height: 250px; }
+}
+
+/* ensure printed output is clean and not overlapped */
+@media print {
+    body { background: #fff; color: #000; }
+    .sidebar_staff, .sidebar, .main-header, .topbar, .sidebar-toggle-overlay { display: none !important; }
+    .page-container { margin: 0 !important; padding: 0 !important; }
+    .card { box-shadow: none; background: #fff; }
+    .btn { display: none !important; }
+    table { font-size: 12px; }
+    .table th, .table td { color: #000; border: 1px solid #000; }
+    canvas { display: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -190,16 +226,11 @@ canvas {
 
   <!-- Export Buttons -->
   <div style="margin-bottom:var(--spacing);">
-    <a href="staff_report.php?export=sales" class="btn">Export My Sales</a>
-    <a href="staff_report.php?export=invoices" class="btn">Export My Invoices</a>
+    <a href="report.php?export=sales" class="btn">Export My Sales</a>
+    <a href="report.php?export=invoices" class="btn">Export My Invoices</a>
     <button onclick="window.print()" class="btn">Print</button>
   </div>
 
-  <!-- Daily Sales Chart -->
-  <div class="card">
-    <h3>My Daily Sales Trend</h3>
-    <canvas id="salesChart"></canvas>
-  </div>
 
   <!-- Daily Sales Table -->
   <div class="card">
@@ -264,47 +295,7 @@ canvas {
   </div>
 </div>
 
-<script>
-// Chart.js daily sales (same logic as admin)
-const labels = <?= json_encode(array_reverse(array_column($sales, 'sale_date'))) ?>;
-const totals = <?= json_encode(array_reverse(array_map('floatval', array_column($sales, 'total_amount')))) ?>;
-
-const ctx = document.getElementById('salesChart').getContext('2d');
-
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels,
-    datasets: [{
-      label: 'My Sales (XAF)',
-      data: totals,
-      borderColor: '#00ff9d',
-      backgroundColor: 'rgba(0,255,157,0.15)',
-      fill: true,
-      tension: 0.35,
-      borderWidth: 2
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: {
-        labels: { color: '#fff' }
-      }
-    },
-    scales: {
-      x: {
-        ticks: { color: '#bdbdbd' },
-        grid: { color: '#222' }
-      },
-      y: {
-        ticks: { color: '#bdbdbd' },
-        grid: { color: '#222' }
-      }
-    }
-  }
-});
-</script>
+<!-- Charts moved to dashboards -->
 <?php include '../layout/footer.php'; ?>
 </body>
 </html>

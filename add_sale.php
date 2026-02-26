@@ -61,7 +61,27 @@ label{color:var(--muted);margin-top:12px;display:block;}
 .btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#000;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:600;margin-top:12px;text-decoration:none;}
 .btn.secondary{background:#2a2a2a;color:#bdbdbd;}
 .messages .error{background:rgba(255,77,77,0.12);color:var(--danger);padding:10px;border-radius:8px;margin-bottom:6px;}
-@media(max-width:720px){.page-container{margin-left:0;margin-top:20px;padding:20px}}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    input { padding: 8px; font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    input { padding: 8px; font-size: 13px; }
+    .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .card { padding: 10px; }
+    h2 { font-size: 18px; }
+    label { font-size: 13px; margin-top: 8px; }
+    input { padding: 6px; font-size: 12px; }
+    .btn { width: 100%; padding: 10px; font-size: 12px; }
+}
 </style>
 </head>
 

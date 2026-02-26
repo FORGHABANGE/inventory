@@ -41,6 +41,17 @@ $invoiceStmt = $pdo->query("
 ");
 $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Stock movements (combined in/out/adjust)
+$movementStmt = $pdo->query(" 
+    SELECT sm.id, sm.type, sm.quantity, sm.reference, sm.note, sm.created_at,
+           p.name AS product_name, u.username AS user_name
+    FROM stock_movements sm
+    LEFT JOIN products p ON sm.product_id = p.id
+    LEFT JOIN users u ON sm.user_id = u.id
+    ORDER BY sm.created_at DESC
+");
+$movements = $movementStmt->fetchAll(PDO::FETCH_ASSOC);
+
 /* ------------------ EXPORT TO EXCEL ------------------ */
 if (isset($_GET['export'])) {
     $type = $_GET['export'];
@@ -80,6 +91,23 @@ if (isset($_GET['export'])) {
             $row++;
         }
         $filename = 'invoices.xlsx';
+    } elseif ($type === 'stock') {
+        $sheet->setTitle('Stock Movements');
+        $sheet->fromArray(['Date','Product','Type','Quantity','Reference','Note','User'], null, 'A1');
+        $row = 2;
+        foreach ($movements as $m) {
+            $sheet->fromArray([
+                $m['created_at'],
+                $m['product_name'],
+                strtoupper($m['type']),
+                $m['quantity'],
+                $m['reference'],
+                $m['note'],
+                $m['user_name'],
+            ], null, "A{$row}");
+            $row++;
+        }
+        $filename = 'stock_movements.xlsx';
     } else {
         http_response_code(400);
         exit('Invalid export type');
@@ -104,7 +132,6 @@ if (isset($_GET['export'])) {
 <meta charset="utf-8">
 <title>Reports</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 /* ------------------ VARIABLES ------------------ */
 :root {
@@ -181,11 +208,50 @@ h3 {
   background: #00e68a;
 }
 
-/* ------------------ UTILITIES ------------------ */
+/* Utilities */
 canvas {
   max-width: 100%;
   height: 400px;
 }
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+  .card { margin-bottom: 15px; }
+  table { font-size: 13px; }
+  th, td { padding: 8px; }
+  canvas { height: 300px; }
+}
+
+@media (max-width: 768px) {
+  .page-container { margin-left: 0; padding: 12px; }
+  table { font-size: 12px; }
+  th, td { padding: 6px; }
+  canvas { height: 250px; }
+}
+
+@media (max-width: 480px) {
+  .page-container { padding: 10px; }
+  h2 { font-size: 18px; }
+  table, thead, tbody, th, td, tr { display: block; }
+  thead { display: none; }
+  tr { margin-bottom: 10px; border: 1px solid #222; padding: 8px; }
+  td { padding: 5px 0; font-size: 11px; }
+  canvas { height: 200px; }
+}
+
+/* print adjustments to avoid overlapping and remove nav elements */
+@media print {
+  body { background: #fff; color: #000; }
+  .sidebar, .main-header, .topbar, .sidebar-toggle-overlay { display: none !important; }
+  .page-container { margin: 0 !important; padding: 0 !important; }
+  .card { box-shadow: none; background: #fff; }
+  .btn { display: none !important; }
+  table { font-size: 12px; }
+  .table th, .table td { color: #000; border: 1px solid #000; }
+  canvas { display: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -200,6 +266,8 @@ canvas {
     <a href="report.php?export=products" class="btn">Export Products</a>
     <a href="report.php?export=sales" class="btn">Export Daily Sales</a>
     <a href="report.php?export=invoices" class="btn">Export Invoices</a>
+    <a href="report.php?export=stock" class="btn">Export Stock Movements</a>
+    <button onclick="window.print()" class="btn">Print</button>
   </div>
 
   <!-- Products Table -->
@@ -228,11 +296,6 @@ canvas {
     </table>
   </div>
 
-  <!-- Daily Sales Chart -->
-  <div class="card">
-    <h3>Daily Sales Trend</h3>
-    <canvas id="salesChart"></canvas>
-  </div>
 
   <!-- Invoices Table -->
   <div class="card">
@@ -258,29 +321,34 @@ canvas {
       </tbody>
     </table>
   </div>
+
+  <!-- Stock Movements Table -->
+  <div class="card">
+    <h3>Stock Movements</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Reference</th><th>Note</th><th>User</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach($movements as $m): ?>
+        <tr>
+          <td><?= htmlspecialchars($m['created_at']) ?></td>
+          <td><?= htmlspecialchars($m['product_name']) ?></td>
+          <td><?= strtoupper(htmlspecialchars($m['type'])) ?></td>
+          <td><?= htmlspecialchars($m['quantity']) ?></td>
+          <td><?= htmlspecialchars($m['reference']) ?></td>
+          <td><?= htmlspecialchars($m['note']) ?></td>
+          <td><?= htmlspecialchars($m['user_name']) ?></td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<script>
-// Chart.js daily sales
-const ctx = document.getElementById('salesChart').getContext('2d');
-const labels = <?= json_encode(array_column($sales, 'sale_date')) ?>;
-const totals = <?= json_encode(array_map('floatval', array_column($sales, 'total_amount'))) ?>;
-
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels,
-    datasets: [{
-      label: 'Total Amount (XAF)',
-      data: totals,
-      borderColor: '#00ff9d',
-      backgroundColor: 'rgba(0,255,157,0.2)',
-      fill: true,
-      tension: 0.3
-    }]
-  }
-});
-</script>
+<!-- Charts moved to dashboards -->
 <?php include 'layout/footer.php'; ?>
 </body>
 </html>

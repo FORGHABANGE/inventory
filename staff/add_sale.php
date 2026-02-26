@@ -48,32 +48,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        try {
-            $pdo->beginTransaction();
+        // Keep sale as a pending session object so add_sale_items.php can finalize it
+        $_SESSION['pending_sale'] = [
+            'invoice_no' => $invoice_no,
+            'customer_name' => $customer_name
+        ];
 
-            $stmt = $pdo->prepare("
-                INSERT INTO sales (invoice_no, customer_name, total_amount, paid_amount, user_id)
-                VALUES (:invoice_no, :customer_name, 0, 0, :user_id)
-            ");
-
-            $stmt->execute([
-                ':invoice_no'    => $invoice_no,
-                ':customer_name' => $customer_name,
-                ':user_id'       => $staff_id
-            ]);
-
-            $sale_id = $pdo->lastInsertId();
-
-            $pdo->commit();
-
-            // Move to sale items (where stock will be handled)
-            header("Location: ../add_sale_items.php?sale_id=" . $sale_id);
-            exit;
-
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            $errors[] = "Database error: " . $e->getMessage();
-        }
+        // Redirect to the shared add_sale_items flow
+        header("Location: ../add_sale_items.php");
+        exit;
     }
 }
 ?>
@@ -154,12 +137,26 @@ input{
     border-radius:8px;
     margin-bottom:6px;
 }
-@media(max-width:720px){
-    .page-container{
-        margin-left:0;
-        margin-top:20px;
-        padding:20px;
-    }
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .page-container { margin-left: 0; margin-top: 100px; padding: 15px; }
+    input { padding: 8px; font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+    .page-container { margin-left: 0; padding: 12px; }
+    input { padding: 8px; font-size: 13px; }
+    .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .page-container { padding: 10px; }
+    .card { padding: 10px; }
+    h2 { font-size: 18px; }
+    label { font-size: 13px; margin-top: 8px; }
+    input { padding: 6px; font-size: 12px; }
+    .btn { width: 100%; padding: 10px; font-size: 12px; }
 }
 </style>
 </head>

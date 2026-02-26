@@ -1,16 +1,20 @@
 <?php
 ?>
 <style>
+.root-sidebar {
+    --sidebar-width: 210px;
+}
 .sidebar{
     position:fixed;
     top:0;
     left:0;
-    width:210px;
+    width:var(--sidebar-width);
     height:100vh;
     background:#0f0f0f;
     padding-top:90px;
     box-shadow:4px 0 20px rgba(0,0,0,0.6);
     z-index:1000;
+    transition: transform 0.28s ease, visibility 0.28s ease;
 }
 .logo-box {
     width: 65px;
@@ -59,15 +63,20 @@
     text-transform:uppercase;
     letter-spacing:1px;
 }
+/* responsive collapsing */
 @media(max-width:720px){
     .sidebar{
-        position:relative;
-        width:100%;
-        height:auto;
-        padding-top:20px;
+        transform: translateX(-100%);
+        visibility: hidden;
     }
 }
+
+@media (max-width: 1024px) {
+    body.sidebar-open .sidebar { transform: translateX(0); visibility: visible; }
+}
 </style>
+
+<div class="sidebar-toggle-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
 
 <div class="sidebar">
 

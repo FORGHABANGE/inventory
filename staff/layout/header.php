@@ -8,8 +8,11 @@ $username = $_SESSION['username'] ?? 'Staff';
 </header>
 
 <div class="main-header">
-    <div class="welcome-text">
-        Welcome, <?= htmlspecialchars($username); ?> (Staff)
+    <div class="welcome-left">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+        <div class="welcome-text">
+            Welcome, <?= htmlspecialchars($username); ?> (Staff)
+        </div>
     </div>
 
     <div class="header-right">
@@ -19,10 +22,19 @@ $username = $_SESSION['username'] ?? 'Staff';
 </div>
 
 <style>
+/* Staff pages: use staff sidebar width variable */
+:root { --sidebar-width: 210px; }
+@media (max-width: 1024px) {
+    :root { --sidebar-width: 0px; }
+    body.sidebar-open { --sidebar-width: 210px; }
+}
+
+.page-container { margin-left: var(--sidebar-width) !important; transition: margin-left 0.28s ease; }
+
 .main-header {
     position: fixed;
     top: 0;
-    left: 240px; /* Sidebar width */
+    left: calc(var(--sidebar-width, 210px));
     right: 0;
     height: 65px;
 
@@ -65,4 +77,67 @@ $username = $_SESSION['username'] ?? 'Staff';
     background: #ff4d4d;
     color: #fff;
 }
+
+/* Small screens: header spans full width when sidebar hidden */
+@media (max-width: 1024px) {
+    .main-header { left: 0; }
+    .sidebar-toggle { display: inline-flex; }
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: #00ff9d;
+    font-size: 20px;
+    margin-right: 12px;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+/* Overlay shown when sidebar is open */
+.sidebar-toggle-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 999;
+    display: none;
+}
+body.sidebar-open .sidebar-toggle-overlay { display: block; }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('sidebarToggle');
+    if(btn){
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            document.body.classList.toggle('sidebar-open');
+            adjustPageContainers();
+        });
+    }
+
+    var overlays = document.getElementsByClassName('sidebar-toggle-overlay');
+    Array.prototype.forEach.call(overlays, function(o){
+        o.addEventListener('click', function(){ document.body.classList.remove('sidebar-open'); adjustPageContainers(); });
+    });
+
+    function adjustPageContainers(){
+        var side = document.querySelector('.sidebar');
+        var pcs = document.querySelectorAll('.page-container');
+        var w = window.innerWidth;
+        var sidebarVisible = side && window.getComputedStyle(side).visibility !== 'hidden' && side.getBoundingClientRect().width>0 && !document.body.classList.contains('sidebar-open') ? true : (document.body.classList.contains('sidebar-open'));
+        var sidebarWidth = sidebarVisible ? Math.round(side.getBoundingClientRect().width) : 0;
+        pcs.forEach(function(p){
+            if(w > 1024){
+                p.style.marginLeft = sidebarWidth + 'px';
+            } else {
+                p.style.marginLeft = '0';
+            }
+        });
+    }
+
+    adjustPageContainers();
+    window.addEventListener('resize', adjustPageContainers);
+});
+</script>
