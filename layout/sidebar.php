@@ -75,15 +75,15 @@
     letter-spacing:1px;
 }
 /* responsive collapsing */
-@media(max-width:720px){
+@media(max-width:1024px){
     .sidebar{
         transform: translateX(-100%);
         visibility: hidden;
     }
-}
-
-@media (max-width: 1024px) {
-    body.sidebar-open .sidebar { transform: translateX(0); visibility: visible; }
+    body.sidebar-open .sidebar{
+        transform: translateX(0);
+        visibility: visible;
+    }
 }
 </style>
 

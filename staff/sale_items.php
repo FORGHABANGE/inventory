@@ -220,6 +220,9 @@ h2{
 </div>
 
 <div style="margin-top:18px;">
+    <a href="../receipt.php?sale_id=<?= $sale_id ?>" class="btn" target="_blank">
+        <i class="bi bi-printer"></i> Print Receipt
+    </a>
     <a href="sales.php" class="btn" style="background:#2a2a2a;color:#bdbdbd;">
         <i class="bi bi-arrow-left"></i> Back to Sales
     </a>

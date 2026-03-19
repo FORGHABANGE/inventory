@@ -104,6 +104,11 @@ $username = $_SESSION['username'] ?? 'Staff';
     display: none;
 }
 body.sidebar-open .sidebar-toggle-overlay { display: block; }
+
+@media (max-width: 1024px) {
+    .sidebar-toggle-overlay { display: none !important; }
+    body.sidebar-open .sidebar-toggle-overlay { display: block !important; }
+}
 </style>
 
 <script>

@@ -104,6 +104,10 @@ h2{color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10
     <i class="bi bi-plus-circle"></i> Add Item
 </a>
 
+<a href="receipt.php?sale_id=<?= $sale_id ?>" class="btn" style="margin-bottom:12px;" target="_blank">
+    <i class="bi bi-receipt"></i> Generate Receipt
+</a>
+
 <table class="table">
 <thead>
 <tr>
