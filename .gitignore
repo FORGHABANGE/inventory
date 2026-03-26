@@ -11,11 +11,5 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Dependencies
-vendor/
-
-# User uploads
-uploads/
-
 # Logs
 *.log
