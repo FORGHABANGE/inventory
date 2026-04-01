@@ -149,16 +149,16 @@ $balance = $totalAmount - $paidAmount;
                     <tr>
                         <td><?= htmlspecialchars($item['name']) ?></td>
                         <td><?= $item['quantity'] ?></td>
-                        <td>$<?= number_format($item['unit_price'], 2) ?></td>
-                        <td>$<?= number_format($item['line_total'], 2) ?></td>
+                        <td>XAF <?= number_format($item['unit_price'], 2) ?></td>
+                        <td>XAF <?= number_format($item['line_total'], 2) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
         <div class="totals">
-            <div><strong>Total Amount:</strong> $<?= number_format($totalAmount, 2) ?></div>
-            <div><strong>Paid Amount:</strong> $<?= number_format($paidAmount, 2) ?></div>
-            <div><strong>Balance:</strong> $<?= number_format($balance, 2) ?></div>
+            <div><strong>Total Amount:</strong> XAF <?= number_format($totalAmount, 2) ?></div>
+            <div><strong>Paid Amount:</strong> XAF <?= number_format($paidAmount, 2) ?></div>
+            <div><strong>Balance:</strong> XAF <?= number_format($balance, 2) ?></div>
         </div>
         <div class="footer">
             <p>&copy; 2026 Inventory Management System. All rights reserved.</p>

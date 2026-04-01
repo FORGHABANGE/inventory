@@ -12,10 +12,34 @@ $user_id = $_SESSION['user_id'] ?? 1;
 
 /* Fetch products */
 $products = $pdo->query("
-    SELECT id, name, selling_price, quantity
+    SELECT id, name, selling_price, quantity, reorder_level
     FROM products
     ORDER BY name ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+$productOptionsHtml = '';
+foreach ($products as $p) {
+    $status = 'In Stock';
+    $disabled = '';
+    if ((int)$p['quantity'] <= (int)$p['reorder_level']) {
+        if ((int)$p['quantity'] === 0) {
+            $status = 'Out of Stock';
+            $disabled = 'disabled';
+        } else {
+            $status = 'Low Stock';
+            $disabled = 'disabled';
+        }
+    }
+    $productOptionsHtml .= sprintf(
+        '<option value="%d" data-price="%s" %s>%s (Qty: %d, Status: %s)</option>',
+        $p['id'],
+        htmlspecialchars($p['selling_price'], ENT_QUOTES),
+        $disabled,
+        htmlspecialchars($p['name']),
+        $p['quantity'],
+        $status
+    );
+}
 
 $errors = [];
 
@@ -53,21 +77,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['items'])) {
             }
             $quantity = (int)$matches[0];
 
-            /* Lock product */
+            /* Lock product and validate availability */
             $stockStmt = $pdo->prepare("
-                SELECT quantity
+                SELECT name, quantity, reorder_level
                 FROM products
                 WHERE id = ?
                 FOR UPDATE
             ");
             $stockStmt->execute([$product_id]);
-            $availableStock = $stockStmt->fetchColumn();
+            $product = $stockStmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($availableStock === false) {
+            if (!$product) {
                 throw new Exception("Product not found.");
             }
-            if ($availableStock < $quantity) {
-                throw new Exception("Insufficient stock.");
+
+            if ((int)$product['quantity'] <= (int)$product['reorder_level']) {
+                $statusWord = ((int)$product['quantity'] === 0) ? 'out of stock' : 'low stock';
+                throw new Exception("Product '{$product['name']}' is currently {$statusWord} and cannot be sold.");
+            }
+
+            if ((int)$product['quantity'] < $quantity) {
+                throw new Exception("Insufficient stock for '{$product['name']}'.");
             }
 
             $line_total = $quantity * $unit_price;
@@ -190,16 +220,12 @@ select,input{width:100%;padding:8px;border-radius:8px;background:#0f0f0f;color:#
 <td>
 <select name="items[0][product_id]" onchange="setPrice(this)" required>
 <option value="">-- Select Product --</option>
-<?php foreach($products as $p): ?>
-<option value="<?= $p['id'] ?>" data-price="<?= $p['selling_price'] ?>">
-<?= htmlspecialchars($p['name']) ?> (<?= $p['quantity'] ?>)
-</option>
-<?php endforeach; ?>
+<?= $productOptionsHtml ?>
 </select>
 </td>
 <td><input type="text" name="items[0][quantity]" required></td>
 <td><input type="number" step="0.01" name="items[0][unit_price]" required></td>
-<td><button type="button" class="btn danger" onclick="removeRow(this)">×</button></td>
+<td><button type="button" class="btn danger" onclick="removeRow(this)"><i class="bi bi-trash"></i></button></td>
 </tr>
 </tbody>
 </table>

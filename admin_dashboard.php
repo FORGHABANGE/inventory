@@ -110,7 +110,7 @@ $sales = array_reverse($salesStmt->fetchAll(PDO::FETCH_ASSOC));
 
     <div class="card" onclick="location.href='sales.php?filter=today';">
         <span>Sales Today</span>
-        <strong>$<?= number_format($salesToday, 2) ?></strong>
+        <strong>XAF <?= number_format($salesToday, 2) ?></strong>
     </div>
 
     <div class="card" onclick="location.href='users.php';">
