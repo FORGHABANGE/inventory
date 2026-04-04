@@ -45,11 +45,11 @@ foreach ($items as $item) {
     $totalAmount += $item['line_total'];
 }
 
-/* Update sales total */
-$updateTotal = $pdo->prepare("UPDATE sales SET total_amount=? WHERE id=?");
-$updateTotal->execute([$totalAmount, $sale_id]);
+/* Update sales total and keep paid amount synchronized */
+$updateTotal = $pdo->prepare("UPDATE sales SET total_amount=?, paid_amount=? WHERE id=?");
+$updateTotal->execute([$totalAmount, $totalAmount, $sale_id]);
 
-$paidAmount = (float)$sale['paid_amount'];
+$paidAmount = $totalAmount;
 ?>
 
 <!doctype html>

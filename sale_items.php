@@ -30,13 +30,13 @@ foreach ($items as $i) {
     $totalAmount += $i['line_total'];
 }
 
-// Update sales table
-$updateTotal = $pdo->prepare("UPDATE sales SET total_amount=? WHERE id=?");
-$updateTotal->execute([$totalAmount, $sale_id]);
+// Update sales table and keep paid amount equal to total amount
+$updateTotal = $pdo->prepare("UPDATE sales SET total_amount=?, paid_amount=? WHERE id=?");
+$updateTotal->execute([$totalAmount, $totalAmount, $sale_id]);
 
-// Refresh paid amount
-$paidAmount = (float)$sale['paid_amount'];
-$balance = $totalAmount - $paidAmount;
+// Refresh paid amount and zero balance (no credit allowed in this system)
+$paidAmount = $totalAmount;
+$balance = 0;
 ?>
 
 <!doctype html>

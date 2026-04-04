@@ -1,6 +1,7 @@
 <?php
 
 $username = $_SESSION['username'] ?? 'Staff';
+$username = preg_replace('/\s*\([^)]*\)/', '', $username);
 ?>
 
 <header class="topbar">
@@ -11,7 +12,7 @@ $username = $_SESSION['username'] ?? 'Staff';
     <div class="welcome-left">
         <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
         <div class="welcome-text">
-            Welcome, <?= htmlspecialchars($username); ?> (Staff)
+            Welcome, <?= htmlspecialchars($username); ?>
         </div>
     </div>
 

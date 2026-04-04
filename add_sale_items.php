@@ -2,12 +2,25 @@
 require_once 'includes/db.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-/* ------------------ VALIDATE PENDING SALE ------------------ */
-if (!isset($_SESSION['pending_sale'])) {
+/* ------------------ DETERMINE SALE CONTEXT ------------------ */
+$sale_id = null;
+$sale = null;
+
+if (isset($_GET['sale_id']) && is_numeric($_GET['sale_id'])) {
+    $sale_id = (int)$_GET['sale_id'];
+    $saleStmt = $pdo->prepare("SELECT * FROM sales WHERE id = ?");
+    $saleStmt->execute([$sale_id]);
+    $sale = $saleStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$sale) {
+        die("Sale not found.");
+    }
+} elseif (isset($_SESSION['pending_sale'])) {
+    $pendingSale = $_SESSION['pending_sale'];
+} else {
     die("No pending sale found. Please start a new sale.");
 }
 
-$pendingSale = $_SESSION['pending_sale'];
+$saleInvoice = $sale['invoice_no'] ?? $pendingSale['invoice_no'];
 $user_id = $_SESSION['user_id'] ?? 1;
 
 /* Fetch products */
@@ -48,18 +61,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['items'])) {
     try {
         $pdo->beginTransaction();
 
-        /* ------------------ CREATE SALE (FIRST TIME ONLY) ------------------ */
-        $insertSale = $pdo->prepare("
-            INSERT INTO sales (invoice_no, customer_name, total_amount, paid_amount, user_id)
-            VALUES (?, ?, 0, 0, ?)
-        ");
-        $insertSale->execute([
-            $pendingSale['invoice_no'],
-            $pendingSale['customer_name'],
-            $user_id
-        ]);
+        /* ------------------ CREATE SALE WHEN NEEDED ------------------ */
+        if (!$sale_id) {
+            $insertSale = $pdo->prepare("
+                INSERT INTO sales (invoice_no, customer_name, total_amount, paid_amount, user_id)
+                VALUES (?, ?, 0, 0, ?)
+            ");
+            $insertSale->execute([
+                $pendingSale['invoice_no'],
+                $pendingSale['customer_name'],
+                $user_id
+            ]);
 
-        $sale_id = $pdo->lastInsertId();
+            $sale_id = $pdo->lastInsertId();
+            $sale = [
+                'id' => $sale_id,
+                'invoice_no' => $pendingSale['invoice_no'],
+                'customer_name' => $pendingSale['customer_name'],
+                'paid_amount' => 0,
+            ];
+        }
 
         /* ------------------ PROCESS SALE ITEMS ------------------ */
         foreach ($_POST['items'] as $item) {
@@ -124,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['items'])) {
                 $product_id,
                 'OUT',
                 $quantity,
-                'SALE-' . $pendingSale['invoice_no'],
+                'SALE-' . $saleInvoice,
                 'Sale deduction',
                 $user_id
             ]);
@@ -153,7 +174,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['items'])) {
         ")->execute([$total, $total, $sale_id]);
 
         /* ------------------ CLEANUP ------------------ */
-        unset($_SESSION['pending_sale']);
+        if (isset($_SESSION['pending_sale'])) {
+            unset($_SESSION['pending_sale']);
+        }
 
         $pdo->commit();
 
@@ -202,7 +225,7 @@ select,input{width:100%;padding:8px;border-radius:8px;background:#0f0f0f;color:#
 
 <div class="page-container">
 <div class="card">
-<h2>Add Sale Items (<?= htmlspecialchars($pendingSale['invoice_no']) ?>)</h2>
+<h2>Add Sale Items (<?= htmlspecialchars($sale['invoice_no'] ?? $pendingSale['invoice_no']) ?>)</h2>
 
 <?php foreach($errors as $e): ?>
   <div class="alert"><?= htmlspecialchars($e) ?></div>

@@ -125,7 +125,7 @@ body{
                 <th>Category</th>
                 <th>Selling Price</th>
                 <th>Reorder Level</th>
-                <th>Status</th>
+                <th>Status</th> 
             </tr>
         </thead>
 
@@ -136,7 +136,7 @@ body{
                 $img = !empty($row['image_path'])
                     ? (filter_var($row['image_path'], FILTER_VALIDATE_URL) ? $row['image_path'] : "../" . $row['image_path'])
                     : "../uploads/products/default.png";
-
+                
                 $catName = $categories[$row['category_id']] ?? "Uncategorized";
 
                 $reorderStatus = ($row['quantity'] <= $row['reorder_level'])
@@ -187,7 +187,7 @@ body{
     </div>
 </div>
 
-<script>
+<script>6
 (function(){
     const popup = document.getElementById('imgPopup');
     const card = popup.querySelector('.popup-card');
